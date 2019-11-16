@@ -3,9 +3,10 @@
 #include <stdint.h>
 
 #define MEMORY_SIZE 4096
-#define PROGRAM_MEMORY_OFFSET 512
+#define PROGRAM_OFFSET 512
 
 uint8_t memory[MEMORY_SIZE];
+uint16_t pc;
 
 typedef enum chip8_error {
     FILE_IO_ERROR = 1,
@@ -36,18 +37,20 @@ Chip8Error try_load_rom_file(FILE *rom)
     long size = ftell(rom);
     if (size == -1L)
         return FILE_IO_ERROR;
-    if (size > MEMORY_SIZE - PROGRAM_MEMORY_OFFSET)
+    if (size > MEMORY_SIZE - PROGRAM_OFFSET)
         return ROM_TOO_LARGE;
     
+    rewind(rom);
+
     // Read the contents of the ROM file into a temporary buffer so it can be
     // copied to main memory.
     uint8_t *rom_buffer = (uint8_t*)malloc(size * sizeof(uint8_t));
-    fread(rom_buffer, sizeof(uint8_t), size, rom);
+    int read = fread(rom_buffer, sizeof(uint8_t), size, rom);
 
-    for (int i = 0; i < size; i++) {
-        memory[i + PROGRAM_MEMORY_OFFSET] = rom_buffer[i];
-    }
+    for (int i = 0; i < size; i++)
+        memory[PROGRAM_OFFSET + i] = rom_buffer[i];
 
+    free(rom_buffer);
     return 0;
 }
 
@@ -70,6 +73,25 @@ void load_rom(char *filepath)
     }
 }
 
+// Executes a single instruction and increments the PC if needed(?)
+void execute_instruction(uint16_t instruction)
+{
+    // WIP: implement instructions.
+    printf("Instruction: %x\n", instruction);
+    printf("Error: ISA implementation is a WIP, please return later...\n");
+    exit(1);
+}
+
+// Begins executing the program loaded into memory.
+void start_cpu()
+{
+    pc = PROGRAM_OFFSET;
+    while (1) {
+        uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
+        execute_instruction(instruction);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -79,5 +101,6 @@ int main(int argc, char *argv[])
 
     char *filepath = argv[1];
     load_rom(filepath);
+    start_cpu();
     return 0;
 }
