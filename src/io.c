@@ -1,4 +1,9 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "io.h"
+#include "errors.h"
+#include "memory.h"
 
 // Attempts to load the contents of a given file pointer into main memory.
 Chip8Error try_load_rom_file(FILE *rom)

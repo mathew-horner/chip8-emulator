@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "memory.h"
 
 uint16_t pc;
 

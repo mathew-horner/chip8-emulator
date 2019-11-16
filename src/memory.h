@@ -4,7 +4,7 @@
 #define MEMORY_SIZE 4096
 #define PROGRAM_OFFSET 512
 
-#include "stdint.h"
+#include <stdint.h>
 
 uint8_t memory[MEMORY_SIZE];
 
