@@ -3,13 +3,26 @@
 #include "graphics.h"
 
 uint16_t pc;
+uint16_t previous_pc;
 
-// Executes a single instruction and increments the PC if needed(?)
+void increment_pc()
+{
+    previous_pc = pc;
+    pc += 2;
+}
+
+void reset_pc()
+{
+    previous_pc = -1;
+    pc = PROGRAM_OFFSET;
+}
+
+// Executes a single instruction and increments the PC if needed.
 void execute_instruction(uint16_t instruction)
 {
     if (instruction == 0x00E0) {
         clear_pixels();
-        pc += PC_STEP;
+        increment_pc();
     } else if (instruction == 0x00EE) {
         // TODO: Implement RET.
     } else {
@@ -23,11 +36,20 @@ void execute_instruction(uint16_t instruction)
 // Executes the instruction at the location of the PC.
 void execute_next_instruction()
 {
-    uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
+    uint16_t instruction = next_instruction();
     execute_instruction(instruction);
 }
 
-void reset_pc()
+// Returns the instruction at the location of the PC.
+uint16_t next_instruction()
 {
-    pc = PROGRAM_OFFSET;
+    return (memory[pc] << 8) | memory[pc + 1];
+}
+
+// Returns the instruction at the previous PC location.
+uint16_t previous_instruction()
+{
+    if (previous_pc == -1)
+        return 0;
+    return (memory[previous_pc] << 8) | memory[previous_pc + 1];
 }
