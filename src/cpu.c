@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "memory.h"
+#include "graphics.h"
 
 uint16_t pc;
 
@@ -7,7 +8,8 @@ uint16_t pc;
 void execute_instruction(uint16_t instruction)
 {
     if (instruction == 0x00E0) {
-        // TODO: Implement CLS.
+        clear_pixels();
+        pc += PC_STEP;
     } else if (instruction == 0x00EE) {
         // TODO: Implement RET.
     } else {
@@ -18,12 +20,14 @@ void execute_instruction(uint16_t instruction)
     }
 }
 
-// Begins executing the program loaded into memory.
-void start_cpu()
+// Executes the instruction at the location of the PC.
+void execute_next_instruction()
+{
+    uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
+    execute_instruction(instruction);
+}
+
+void initialize_cpu()
 {
     pc = PROGRAM_OFFSET;
-    while (1) {
-        uint16_t instruction = (memory[pc] << 8) | memory[pc + 1];
-        execute_instruction(instruction);
-    }
 }

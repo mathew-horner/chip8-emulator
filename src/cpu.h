@@ -1,6 +1,9 @@
 #ifndef CPU_H
 #define CPU_H
 
-void start_cpu();
+#define PC_STEP 2
+
+void execute_next_instruction();
+void initialize_cpu();
 
 #endif

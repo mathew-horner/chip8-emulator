@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "io.h"
+#include "graphics.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,6 +14,15 @@ int main(int argc, char *argv[])
 
     char *filepath = argv[1];
     load_rom(filepath);
-    start_cpu();
+
+    initialize_cpu();
+    initialize_renderer();
+
+    while (1) {
+        execute_next_instruction();
+        render_frame();
+    }
+
+    destroy_renderer();
     return 0;
 }
