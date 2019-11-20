@@ -3,7 +3,10 @@
 
 #define PC_STEP 2
 
+#include <stdint.h>
+
+void execute_instruction(uint16_t instruction);
 void execute_next_instruction();
-void initialize_cpu();
+void reset_pc();
 
 #endif

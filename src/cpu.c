@@ -27,7 +27,7 @@ void execute_next_instruction()
     execute_instruction(instruction);
 }
 
-void initialize_cpu()
+void reset_pc()
 {
     pc = PROGRAM_OFFSET;
 }
