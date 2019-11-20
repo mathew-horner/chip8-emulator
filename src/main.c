@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     } else {
         char *filepath = argv[1];
         load_rom(filepath);
-        reset_pc();
+        initialize_cpu();
 
         if (argc > 2 && strcmp(argv[2], "--debug") == 0)
             debugger_loop();

@@ -4,6 +4,8 @@
 
 uint16_t pc;
 uint16_t previous_pc;
+uint16_t stack[16];
+uint8_t sp;
 
 void increment_pc()
 {
@@ -11,16 +13,27 @@ void increment_pc()
     pc += 2;
 }
 
-void reset_pc()
+void move_pc(uint16_t address)
 {
-    previous_pc = -1;
+    previous_pc = pc;
+    pc = address;
+}
+
+// Sets the CPU to a state where it is ready to begin executing a program.
+void initialize_cpu()
+{
+    previous_pc = 0;
     pc = PROGRAM_OFFSET;
+    sp = 0;
+    for (int i = 0; i < 16; i++)
+        stack[i] = 0;
 }
 
 // Executes a single instruction and increments the PC if needed.
 void execute_instruction(uint16_t instruction)
 {
     if (instruction == 0x00E0) {
+        // CLS
         clear_pixels();
         increment_pc();
     } else if (instruction == 0x00EE) {
@@ -29,6 +42,13 @@ void execute_instruction(uint16_t instruction)
         uint8_t left, right;
         left = instruction >> 12;
         right = instruction & 0xF;
+
+        if (left == 2) {
+            // CALL addr
+            stack[sp] = pc;
+            sp++;
+            move_pc(instruction & 0xFFF);
+        }
         // TODO: Implement other opcodes.
     }
 }
@@ -49,7 +69,7 @@ uint16_t next_instruction()
 // Returns the instruction at the previous PC location.
 uint16_t previous_instruction()
 {
-    if (previous_pc == -1)
+    if (previous_pc == 0)
         return 0;
     return (memory[previous_pc] << 8) | memory[previous_pc + 1];
 }
