@@ -38,6 +38,9 @@ void debugger_loop()
         } else if (strcmp(input, "previous") == 0) {
             printf("0x%x\n", previous_instruction());
         } else if (strcmp(input, "registers") == 0) {
+            printf("I: 0x%x\n", I_value());
+            printf("dt: 0x%x\n", dt_value());
+            printf("st: 0x%x\n", st_value());
             for (int i = 0; i < 16; i++)
                 printf("V%d: 0x%x\n", i, register_value(i));
         }

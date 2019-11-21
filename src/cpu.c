@@ -212,3 +212,18 @@ uint8_t register_value(uint8_t number)
 {
     return registers[number];
 }
+
+uint16_t I_value()
+{
+    return I;
+}
+
+uint8_t st_value()
+{
+    return st;
+}
+
+uint8_t dt_value()
+{
+    return dt;
+}
