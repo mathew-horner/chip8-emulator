@@ -34,9 +34,12 @@ void debugger_loop()
         } else if (strcmp(input, "step") == 0) {
             execute_next_instruction();
         } else if (strcmp(input, "next") == 0) {
-            printf("%x\n", next_instruction());
+            printf("0x%x\n", next_instruction());
         } else if (strcmp(input, "previous") == 0) {
-            printf("%x\n", previous_instruction());
+            printf("0x%x\n", previous_instruction());
+        } else if (strcmp(input, "registers") == 0) {
+            for (int i = 0; i < 16; i++)
+                printf("V%d: 0x%x\n", i, register_value(i));
         }
     }
 }

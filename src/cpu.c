@@ -206,3 +206,9 @@ uint16_t previous_instruction()
         return 0;
     return (memory[previous_pc] << 8) | memory[previous_pc + 1];
 }
+
+// Returns the value in the given register number.
+uint8_t register_value(uint8_t number)
+{
+    return registers[number];
+}
