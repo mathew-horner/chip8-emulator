@@ -66,37 +66,37 @@ void execute_instruction(uint16_t instruction)
             move_pc(instruction & 0xFFF);
         } else if (left == 3) {
             // SE Vx, byte
-            uint8_t x = (instruction >> 2) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
             uint8_t byte = instruction & 0xFF;
             if (registers[x] == byte) increment_pc();
             increment_pc();
         } else if (left == 4) {
             // SNE Vx, byte
-            uint8_t x = (instruction >> 2) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
             uint8_t byte = instruction & 0xFF;
             if (registers[x] != byte) increment_pc();
             increment_pc();
         } else if (left == 5) {
             // SE Vx, Vy
-            uint8_t x = (instruction >> 2) & 0xF;
-            uint8_t y = (instruction >> 1) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
+            uint8_t y = (instruction >> 4) & 0xF;
             if (registers[x] == registers[y]) increment_pc();
             increment_pc();
         } else if (left == 6) {
             // LD Vx, byte
-            uint8_t x = (instruction >> 2) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
             uint8_t byte = instruction & 0xFF;
             registers[x] = byte;
             increment_pc();
         } else if (left == 7) {
             // ADD Vx, byte
-            uint8_t x = (instruction >> 2) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
             uint8_t byte = instruction & 0xFF;
             registers[x] += byte;
             increment_pc();
         } else if (left == 8) {
-            uint8_t x = (instruction >> 2) & 0xF;
-            uint8_t y = (instruction >> 1) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
+            uint8_t y = (instruction >> 4) & 0xF;
 
             if (right == 0) {
                 // LD Vx, Vy
@@ -144,8 +144,8 @@ void execute_instruction(uint16_t instruction)
             increment_pc();
         } else if (left == 9) {
             // SNE Vx, Vy
-            uint8_t x = (instruction >> 2) & 0xF;
-            uint8_t y = (instruction >> 1) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
+            uint8_t y = (instruction >> 4) & 0xF;
             if (registers[x] != registers[y]) increment_pc();
             increment_pc();
         } else if (left == 10) {
@@ -157,7 +157,7 @@ void execute_instruction(uint16_t instruction)
             move_pc(registers[0] + (instruction & 0xFFF));
         } else if (left == 15) {
             uint8_t right_two = instruction & 0xFF;
-            uint8_t x = (instruction >> 2) & 0xF;
+            uint8_t x = (instruction >> 8) & 0xF;
             if (right_two == 0x07) {
                 // LD Vx, DT
                 registers[x] = dt;
