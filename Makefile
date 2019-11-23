@@ -1,6 +1,11 @@
+SOURCE_FILES = src/cpu.c src/errors.c src/graphics.c src/io.c
+TEST_FILES = tests/test_cpu.c
+
 emu:
 	mkdir -p dist
-	gcc src/main.c src/cpu.c src/errors.c src/graphics.c src/io.c -o dist/chip8-emulator -lSDL2
+	gcc -o dist/chip8-emulator $(SOURCE_FILES) src/main.c -lSDL2
 
-run: emu
-	./dist/chip8-emulator
+test:
+	mkdir -p build
+	gcc -o build/test $(TEST_FILES) $(SOURCE_FILES) -lcriterion -lSDL2
+	./build/test

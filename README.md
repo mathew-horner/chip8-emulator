@@ -8,6 +8,7 @@ Linux is the only supported Operating System at this time.
 * GNU Make
 * SDL 2.0
 * GCC
+* [Criterion](https://github.com/Snaipe/Criterion)
 
 ## How to Use
 
@@ -51,6 +52,14 @@ For example, to clear the screen in REPL mode, you would simply type...
 
 ```
 >>> 00E0
+```
+
+## Unit Tests
+
+This emulator uses [Criterion](https://github.com/Snaipe/Criterion) for its unit tests. There is a make command for running the unit tests.
+
+```
+make test
 ```
 
 ## Resources and Credits

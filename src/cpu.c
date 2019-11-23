@@ -1,24 +1,16 @@
-#include <stdbool.h>
 #include <stdlib.h>
 #include "cpu.h"
 #include "memory.h"
 #include "graphics.h"
 
-uint16_t pc;
-uint16_t previous_pc;
-uint16_t stack[16];
-uint8_t sp;
-uint8_t registers[16];
-uint16_t I;
-bool vf;
-uint8_t dt, st;
-
+// Moves the PC to the next instruction and sets the previous location of the PC.
 void increment_pc()
 {
     previous_pc = pc;
     pc += 2;
 }
 
+// Moves the PC to the given address and sets the previous location of the PC.
 void move_pc(uint16_t address)
 {
     previous_pc = pc;
@@ -221,25 +213,4 @@ uint16_t previous_instruction()
     if (previous_pc == 0)
         return 0;
     return (memory[previous_pc] << 8) | memory[previous_pc + 1];
-}
-
-// Returns the value in the given register number.
-uint8_t register_value(uint8_t number)
-{
-    return registers[number];
-}
-
-uint16_t I_value()
-{
-    return I;
-}
-
-uint8_t st_value()
-{
-    return st;
-}
-
-uint8_t dt_value()
-{
-    return dt;
 }
