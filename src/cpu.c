@@ -178,6 +178,14 @@ void execute_instruction(uint16_t instruction)
             } else if (right_two == 0x1E) {
                 // ADD I, Vx
                 I += registers[x];
+            } else if (right_two == 0x33) {
+                // LD B, Vx
+                uint8_t x = (instruction >> 8) & 0xF;
+                uint8_t temp = registers[x];
+                for (int i = 2; i >= 0; i--) {
+                    memory[I + i] = temp % 10;
+                    temp /= 10;
+                }
             } else if (right_two == 0x55) {
                 // LD [I], Vx
                 for (int i = 0; i < x; i++)
