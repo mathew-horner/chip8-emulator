@@ -10,11 +10,11 @@
 
 void print_register_values()
 {
-    printf("I: 0x%x\n", I);
-    printf("dt: 0x%x\n", dt);
-    printf("st: 0x%x\n", st);
+    printf("I: 0x%x\n", get_I());
+    printf("dt: 0x%x\n", get_dt());
+    printf("st: 0x%x\n", get_st());
     for (int i = 0; i < 16; i++)
-        printf("V%d: 0x%x\n", i, registers[i]);
+        printf("V%d: 0x%x\n", i, get_register(i));
 }
 
 void repl_loop()
