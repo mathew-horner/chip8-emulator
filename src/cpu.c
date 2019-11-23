@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdlib.h>
 #include "cpu.h"
 #include "memory.h"
 #include "graphics.h"
@@ -155,6 +156,13 @@ void execute_instruction(uint16_t instruction)
         } else if (left == 11) {
             // JP V0, addr
             move_pc(registers[0] + (instruction & 0xFFF));
+        } else if (left == 12) {
+            // RND Vx, byte
+            uint8_t x = (instruction >> 8) & 0xF;
+            uint8_t byte = instruction & 0xFF;
+            uint8_t random = rand() % 256;
+            registers[x] = random & byte;
+            increment_pc();
         } else if (left == 15) {
             uint8_t right_two = instruction & 0xFF;
             uint8_t x = (instruction >> 8) & 0xF;

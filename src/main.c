@@ -2,10 +2,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "cpu.h"
 #include "io.h"
 #include "graphics.h"
 #include "memory.h"
+
+void print_register_values()
+{
+    printf("I: 0x%x\n", I_value());
+    printf("dt: 0x%x\n", dt_value());
+    printf("st: 0x%x\n", st_value());
+    for (int i = 0; i < 16; i++)
+        printf("V%d: 0x%x\n", i, register_value(i));
+}
 
 void repl_loop()
 {
@@ -15,6 +25,9 @@ void repl_loop()
         printf(">>> ");
         scanf("%s", input);
         if (strcmp(input, "exit") == 0) break;
+        if (strcmp(input, "registers") == 0) {
+            print_register_values();
+        }
         uint16_t instruction = (uint16_t)strtol(input, NULL, 16);
         execute_instruction(instruction);
         render_frame();
@@ -38,11 +51,7 @@ void debugger_loop()
         } else if (strcmp(input, "previous") == 0) {
             printf("0x%x\n", previous_instruction());
         } else if (strcmp(input, "registers") == 0) {
-            printf("I: 0x%x\n", I_value());
-            printf("dt: 0x%x\n", dt_value());
-            printf("st: 0x%x\n", st_value());
-            for (int i = 0; i < 16; i++)
-                printf("V%d: 0x%x\n", i, register_value(i));
+            print_register_values();
         }
     }
 }
@@ -62,6 +71,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    srand(time(0));
     initialize_renderer();
 
     if (strcmp(argv[1], "--repl") == 0) {
