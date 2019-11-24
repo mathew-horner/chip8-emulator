@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
-uint8_t memory[MEMORY_SIZE];
+typedef struct memory_t {
+    uint8_t values[MEMORY_SIZE];
+} Memory;
 
 #endif
