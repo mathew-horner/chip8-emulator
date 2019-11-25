@@ -21,8 +21,8 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             move_pc(&(emulator->cpu), instruction & 0xFFF);
         } else if (left == 2) {
             // CALL addr
-            emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc;
             emulator->cpu.sp++;
+            emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc;
             move_pc(&(emulator->cpu), instruction & 0xFFF);
         } else if (left == 3) {
             // SE Vx, byte
@@ -147,11 +147,11 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
                 }
             } else if (right_two == 0x55) {
                 // LD [I], Vx
-                for (int i = 0; i < x; i++)
+                for (int i = 0; i <= x; i++)
                     emulator->memory.values[emulator->cpu.I + i] = emulator->cpu.registers[i];
             } else if (right_two == 0x65) {
                 // LD Vx, [I]
-                for (int i = 0; i < x; i++)
+                for (int i = 0; i <= x; i++)
                     emulator->cpu.registers[i] = emulator->memory.values[emulator->cpu.I + i];
             }
             increment_pc(&(emulator->cpu));

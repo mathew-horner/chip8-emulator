@@ -21,7 +21,7 @@ void initialize_cpu(CPU *cpu)
 {
     cpu->previous_pc = 0;
     cpu->pc = PROGRAM_OFFSET;
-    cpu->sp = 0;
+    cpu->sp = -1;
     cpu->dt = 0;
     cpu->st = 0;
     cpu->vf = 0;
