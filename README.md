@@ -36,7 +36,19 @@ The debugger currently supports the following commands...
 * `step`: Executes the next instruction.
 * `next`: Displays the next instruction in hexidecimal format.
 * `previous`: Displays the previous instruction in hexidecimal format.
+* `register <v>`: Displays the contents of a single CPU register (can be `dt`, `st`, `I`, or any number 0-15).
 * `registers`: Displays the contents of every CPU register.
+* `memory <start> <end> [chunk size]`: Displays the contents of memory from addresses start:end (given in hexidecimal form). You can also supply a chunk size argument of 1, 2, or 4 - which will specify whether the command will display the memory in 8-bit, 16-bit, or 32-bit format.
+    
+    Example: `memory 0x200 0x203 2`
+    
+    Output
+    ```
+    [0x200] 0x2f8b
+    [0x202] 0xffff
+    ```
+* `stack full`: Displays the entire stack.
+* `stack peek`: Displays the top value of the stack.
 
 ## REPL
 
