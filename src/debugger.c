@@ -86,12 +86,32 @@ void command_registers(Emulator *emulator, char **args, int arg_count)
     print_register_values(&(emulator->cpu));
 }
 
+void command_stack(Emulator *emulator, char **args, int arg_count)
+{
+    if (arg_count != 1) {
+        printf("Usage: stack <command> - Available Commands: full, peek\n");
+        return;
+    }
+
+    char *command = args[0];
+
+    if (strcmp(command, "full") == 0) {
+        for (int i = 0; i <= emulator->cpu.sp; i++)
+            printf("[%d] 0x%x\n", i, emulator->cpu.stack[i]);
+    } else if (strcmp(command, "peek") == 0) {
+        if (emulator->cpu.sp >= 0)
+            printf("0x%x\n", emulator->cpu.stack[emulator->cpu.sp]);
+    } else {
+        printf("%s is not a valid stack inspection command!", command);
+    }
+}
+
 void command_step(Emulator *emulator, char **args, int arg_count)
 {
     execute_next_instruction(emulator);
 }
 
-void (*debugger_command_map[8]) (Emulator *emulator, char **args, int arg_count) = {
+void (*debugger_command_map[9]) (Emulator *emulator, char **args, int arg_count) = {
     command_continue,
     NULL,
     command_memory,
@@ -99,6 +119,7 @@ void (*debugger_command_map[8]) (Emulator *emulator, char **args, int arg_count)
     command_previous,
     command_register,
     command_registers,
+    command_stack,
     command_step
 };
 
@@ -134,6 +155,8 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
         command->type = REGISTER;
     else if (strcmp(input, "registers") == 0)
         command->type = REGISTERS;
+    else if (strcmp(input, "stack") == 0)
+        command->type = STACK;
     else if (strcmp(input, "step") == 0)
         command->type = STEP;
     else

@@ -13,6 +13,7 @@ typedef enum debugger_command_type_t {
     PREVIOUS,
     REGISTER,
     REGISTERS,
+    STACK,
     STEP,
 } DebuggerCommandType;
 
