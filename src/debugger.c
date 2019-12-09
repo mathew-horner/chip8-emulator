@@ -12,6 +12,14 @@ void print_register_values(CPU *cpu)
         printf("V%d: 0x%x\n", i, cpu->registers[i]);
 }
 
+/*
+ * Attempts to parse debugger prompt input into a DebuggerCommand struct.
+ * 
+ * Returns:
+ * 0 - Success.
+ * 1 - Invalid command.
+ * 2 - Too many arguments (cannot fit inside fixed size command.args buffer).
+ */
 int parse_debugger_command(char *input, DebuggerCommand *command)
 {
     char *token = strtok(input, " ");
@@ -51,6 +59,7 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
     return 0;
 }
 
+// Executes a debugger command against an Emulator instance.
 void execute_debugger_command(DebuggerCommand *command, Emulator *emulator)
 {
     if (command->type == CONTINUE) {
@@ -114,6 +123,7 @@ void execute_debugger_command(DebuggerCommand *command, Emulator *emulator)
     }
 }
 
+// Frees all memory allocated by parse_debugger_command.
 int destroy_debugger_command(DebuggerCommand *command)
 {
     free(command->args);
