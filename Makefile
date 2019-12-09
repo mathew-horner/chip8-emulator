@@ -3,7 +3,7 @@ TEST_FILES = tests/test_cpu.c tests/test_emulator.c
 
 emu:
 	mkdir -p dist
-	gcc -o dist/chip8-emulator $(SOURCE_FILES) src/main.c -lSDL2
+	gcc -o dist/chip8-emulator $(SOURCE_FILES) src/main.c -lSDL2 -g
 
 test:
 	mkdir -p build
