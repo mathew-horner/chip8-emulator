@@ -12,11 +12,6 @@ void print_register_values(CPU *cpu)
         printf("V%d: 0x%x\n", i, cpu->registers[i]);
 }
 
-void command_continue(Emulator *emulator, char **args, int arg_count)
-{
-    printf("Not supported yet.\n");
-}
-
 void command_memory(Emulator *emulator, char **args, int arg_count)
 {
     if (arg_count < 2) {
@@ -111,8 +106,56 @@ void command_step(Emulator *emulator, char **args, int arg_count)
     execute_next_instruction(emulator);
 }
 
-void (*debugger_command_map[9]) (Emulator *emulator, char **args, int arg_count) = {
-    command_continue,
+void special_command_break(Emulator *emulator, Breakpoints *breakpoints, char **args, int arg_count)
+{
+    if (arg_count < 1) {
+        printf("Usage: break <command> [command specific options]\n");
+        return;
+    }
+    
+    if (strcmp(args[0], "list-address") == 0) {
+        for (int i = 0; i < breakpoints->address_count; i++)
+            if (breakpoints->addresses[i] != 0)
+                printf("0x%x\n", breakpoints->addresses[i]);
+        return;
+    }
+
+    if (!(strcmp(args[0], "address") == 0 || strcmp(args[0], "remove-address") == 0)) {
+        printf("Invalid command!\n");
+        return;
+    }
+
+    if (arg_count != 2) {
+        printf("Usage: break %s <memory address (in Hex)>\n", args[0]);
+        return;
+    }
+
+    // FIXME: Need to do better error handling here.
+    // Does not currently account for junk values.
+    uint16_t address = (uint16_t)strtol(args[1], NULL, 0);
+
+    if (strcmp(args[0], "address") == 0) {
+        breakpoints->addresses[breakpoints->address_count] = address;
+        breakpoints->address_count++;
+    } else if (strcmp(args[0], "remove-address") == 0) {
+        int address_index = -1;
+        for (int i = 0; i < breakpoints->address_count; i++) {
+            if (breakpoints->addresses[i] == address) {
+                address_index = i;
+                break;
+            }
+        }
+
+        if (address_index != -1) {
+            breakpoints->addresses[address_index] = 0;
+        } else {
+            printf("Address does not currently have a breakpoint!\n");
+        }
+    }
+}
+
+void (*debugger_command_map[10]) (Emulator *emulator, char **args, int arg_count) = {
+    NULL,
     NULL,
     command_memory,
     command_next,
@@ -120,12 +163,17 @@ void (*debugger_command_map[9]) (Emulator *emulator, char **args, int arg_count)
     command_register,
     command_registers,
     command_stack,
-    command_step
+    command_step,
+    NULL
 };
 
 // Executes a debugger command against an Emulator instance.
-void execute_debugger_command(DebuggerCommand *command, Emulator *emulator)
+void execute_debugger_command(DebuggerCommand *command, Emulator *emulator, Breakpoints *breakpoints)
 {
+    if (command->type == BREAK) {
+        special_command_break(emulator, breakpoints, command->args, command->arg_count);
+        return;
+    }
     debugger_command_map[command->type](emulator, command->args, command->arg_count);
 }
 
@@ -159,6 +207,8 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
         command->type = STACK;
     else if (strcmp(input, "step") == 0)
         command->type = STEP;
+    else if (strcmp(input, "break") == 0)
+        command->type = BREAK;
     else
         return 1;
     
@@ -182,4 +232,13 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
 int destroy_debugger_command(DebuggerCommand *command)
 {
     free(command->args);
+}
+
+// Returns whether or not the debugger should break with the given state of the emulator.
+bool should_break(Emulator *emulator, Breakpoints *breakpoints)
+{
+    for (int i = 0; i < breakpoints->address_count; i++)
+        if (breakpoints->addresses[i] == emulator->cpu.pc)
+            return true;
+    return false;
 }

@@ -23,31 +23,45 @@ void repl_loop(Emulator *emulator)
 
 void debugger_loop(Emulator *emulator)
 {
+    Breakpoints breakpoints;
+    breakpoints.address_count = 0;
+
+    bool pass = false;
     char *input;
     size_t n;
 
     printf("You are running the Chip-8 Emulator in Debug mode.\n");
 
     while (1) {
-        printf(">>> ");
-        int size = (int)getline(&input, &n, stdin);
-        input[size - 1] = '\0';
-        
-        DebuggerCommand command;
-        int error = parse_debugger_command(input, &command);
+        if (!pass || should_break(emulator, &breakpoints)) {
+            pass = false; 
+            printf(">>> ");
+            int size = (int)getline(&input, &n, stdin);
+            input[size - 1] = '\0';
+            
+            DebuggerCommand command;
+            int error = parse_debugger_command(input, &command);
 
-        
-        if (error != 0) {
-            // TODO: Print out specific error here.
-            printf("Error parsing command!\n");
-            continue;
+            if (error != 0) {
+                // TODO: Print out specific error here.
+                printf("Error parsing command!\n");
+                continue;
+            }
+
+            if (command.type == EXIT) break;
+            if (command.type == CONTINUE) {
+                pass = true;
+                execute_next_instruction(emulator);
+                continue;
+            }
+
+            execute_debugger_command(&command, emulator, &breakpoints);
+            destroy_debugger_command(&command);
+        } else {
+            execute_next_instruction(emulator);
         }
 
-
-        if (command.type == EXIT) break;
-
-        execute_debugger_command(&command, emulator);
-        destroy_debugger_command(&command);
+        render_frame(&(emulator->display));
     }
 }
 

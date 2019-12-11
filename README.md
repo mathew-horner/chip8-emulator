@@ -39,7 +39,7 @@ The debugger currently supports the following commands...
 * `register <v>`: Displays the contents of a single CPU register (can be `dt`, `st`, `I`, or any number 0-15).
 * `registers`: Displays the contents of every CPU register.
 * `memory <start> <end> [chunk size]`: Displays the contents of memory from addresses start:end (given in hexidecimal form). You can also supply a chunk size argument of 1, 2, or 4 - which will specify whether the command will display the memory in 8-bit, 16-bit, or 32-bit format.
-    
+
     Example: `memory 0x200 0x203 2`
     
     Output
@@ -47,6 +47,11 @@ The debugger currently supports the following commands...
     [0x200] 0x2f8b
     [0x202] 0xffff
     ```
+
+* `break address <memory address (in Hex)>`: Sets a breakpoint for the instruction at the given memory address.
+* `break remove-address <memory address (in Hex)>`: Removes the breakpoint at the given memory  address.
+* `break list-address`: Lists all addresses that have breakpoints.
+* `continue`: Resumes execution until the next breakpoint is hit.
 * `stack full`: Displays the entire stack.
 * `stack peek`: Displays the top value of the stack.
 
