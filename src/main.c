@@ -23,8 +23,9 @@ void repl_loop(Emulator *emulator)
 
 void debugger_loop(Emulator *emulator)
 {
-    Breakpoints breakpoints;
-    breakpoints.address_count = 0;
+    Debugger debugger;
+    debugger.emulator = emulator;
+    debugger.break_address_count = 0;
 
     bool pass = false;
     char *input;
@@ -33,7 +34,7 @@ void debugger_loop(Emulator *emulator)
     printf("You are running the Chip-8 Emulator in Debug mode.\n");
 
     while (1) {
-        if (!pass || should_break(emulator, &breakpoints)) {
+        if (!pass || should_break(&debugger)) {
             pass = false; 
             printf(">>> ");
             int size = (int)getline(&input, &n, stdin);
@@ -55,7 +56,7 @@ void debugger_loop(Emulator *emulator)
                 continue;
             }
 
-            execute_debugger_command(&command, emulator, &breakpoints);
+            execute_debugger_command(&debugger, &command);
             destroy_debugger_command(&command);
         } else {
             execute_next_instruction(emulator);

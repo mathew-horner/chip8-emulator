@@ -12,23 +12,23 @@ void print_register_values(CPU *cpu)
         printf("V%d: 0x%x\n", i, cpu->registers[i]);
 }
 
-void command_memory(Emulator *emulator, char **args, int arg_count)
+void command_memory(Debugger *debugger, DebuggerCommand *command)
 {
-    if (arg_count < 2) {
+    if (command->arg_count < 2) {
         printf("Usage: memory <start address> <end address> [chunk size]\n");
         return;
     }
 
     // FIXME: Need to do better error handling here.
     // Does not currently account for junk values.
-    uint16_t start = (uint16_t)strtol(args[0], NULL, 0);
-    uint16_t end = (uint16_t)strtol(args[1], NULL, 0);
+    uint16_t start = (uint16_t)strtol(command->args[0], NULL, 0);
+    uint16_t end = (uint16_t)strtol(command->args[1], NULL, 0);
 
     int bytes_per = 1;
 
-    if (arg_count >= 3) {
-        if (strcmp(args[2], "2") == 0) bytes_per = 2;
-        else if (strcmp(args[2], "4") == 0) bytes_per = 4;
+    if (command->arg_count >= 3) {
+        if (strcmp(command->args[2], "2") == 0) bytes_per = 2;
+        else if (strcmp(command->args[2], "4") == 0) bytes_per = 4;
     }
 
     if (start < 0 || (end + bytes_per) >= MEMORY_SIZE) {
@@ -37,124 +37,124 @@ void command_memory(Emulator *emulator, char **args, int arg_count)
     }
 
     for (int i = start; i <= end; i += bytes_per) {
-        unsigned int memory_value = emulator->memory.values[i];
+        unsigned int memory_value = debugger->emulator->memory.values[i];
         for (int j = 1; j < bytes_per; j++) {
             memory_value <<= 8;
-            memory_value |= emulator->memory.values[i + j];
+            memory_value |= debugger->emulator->memory.values[i + j];
         }
         printf("[0x%x] 0x%x\n", i, memory_value);
     }
 }
 
-void command_next(Emulator *emulator, char **args, int arg_count)
+void command_next(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("0x%x\n", next_instruction(emulator));
+    printf("0x%x\n", next_instruction(debugger->emulator));
 }
 
-void command_previous(Emulator *emulator, char **args, int arg_count)
+void command_previous(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("0x%x\n", previous_instruction(emulator));
+    printf("0x%x\n", previous_instruction(debugger->emulator));
 }
 
-void command_register(Emulator *emulator, char **args, int arg_count)
+void command_register(Debugger *debugger, DebuggerCommand *command)
 {
-    if (strcmp(args[0], "I") == 0)
-        printf("I: 0x%x\n", emulator->cpu.I);
-    else if (strcmp(args[0], "dt") == 0)
-        printf("dt: 0x%x\n", emulator->cpu.dt);
-    else if (strcmp(args[0], "st") == 0)
-        printf("st: 0x0%x\n", emulator->cpu.st);
+    if (strcmp(command->args[0], "I") == 0)
+        printf("I: 0x%x\n", debugger->emulator->cpu.I);
+    else if (strcmp(command->args[0], "dt") == 0)
+        printf("dt: 0x%x\n", debugger->emulator->cpu.dt);
+    else if (strcmp(command->args[0], "st") == 0)
+        printf("st: 0x0%x\n", debugger->emulator->cpu.st);
     else {
         // FIXME: Need to do better error handling here.
         // Does not currently account for junk values.
-        int v = atoi(args[0]);
+        int v = atoi(command->args[0]);
         if (v < 0 || v > 15) {
             printf("%d is not a valid register number!\n", v);
             return;
         }
-        printf("V%d: 0x%x\n", v, emulator->cpu.registers[v]);
+        printf("V%d: 0x%x\n", v, debugger->emulator->cpu.registers[v]);
     }
 }
 
-void command_registers(Emulator *emulator, char **args, int arg_count)
+void command_registers(Debugger *debugger, DebuggerCommand *command)
 {
-    print_register_values(&(emulator->cpu));
+    print_register_values(&(debugger->emulator->cpu));
 }
 
-void command_stack(Emulator *emulator, char **args, int arg_count)
+void command_stack(Debugger *debugger, DebuggerCommand *command)
 {
-    if (arg_count != 1) {
+    if (command->arg_count != 1) {
         printf("Usage: stack <command> - Available Commands: full, peek\n");
         return;
     }
 
-    char *command = args[0];
+    char *stack_command = command->args[0];
 
-    if (strcmp(command, "full") == 0) {
-        for (int i = 0; i <= emulator->cpu.sp; i++)
-            printf("[%d] 0x%x\n", i, emulator->cpu.stack[i]);
-    } else if (strcmp(command, "peek") == 0) {
-        if (emulator->cpu.sp >= 0)
-            printf("0x%x\n", emulator->cpu.stack[emulator->cpu.sp]);
+    if (strcmp(stack_command, "full") == 0) {
+        for (int i = 0; i <= debugger->emulator->cpu.sp; i++)
+            printf("[%d] 0x%x\n", i, debugger->emulator->cpu.stack[i]);
+    } else if (strcmp(stack_command, "peek") == 0) {
+        if (debugger->emulator->cpu.sp >= 0)
+            printf("0x%x\n", debugger->emulator->cpu.stack[debugger->emulator->cpu.sp]);
     } else {
-        printf("%s is not a valid stack inspection command!", command);
+        printf("%s is not a valid stack inspection command!", stack_command);
     }
 }
 
-void command_step(Emulator *emulator, char **args, int arg_count)
+void command_step(Debugger *debugger, DebuggerCommand *command)
 {
-    execute_next_instruction(emulator);
+    execute_next_instruction(debugger->emulator);
 }
 
-void special_command_break(Emulator *emulator, Breakpoints *breakpoints, char **args, int arg_count)
+void command_break(Debugger *debugger, DebuggerCommand *command)
 {
-    if (arg_count < 1) {
+    if (command->arg_count < 1) {
         printf("Usage: break <command> [command specific options]\n");
         return;
     }
     
-    if (strcmp(args[0], "list-address") == 0) {
-        for (int i = 0; i < breakpoints->address_count; i++)
-            if (breakpoints->addresses[i] != 0)
-                printf("0x%x\n", breakpoints->addresses[i]);
+    if (strcmp(command->args[0], "list-address") == 0) {
+        for (int i = 0; i < debugger->break_address_count; i++)
+            if (debugger->break_addresses[i] != 0)
+                printf("0x%x\n", debugger->break_addresses[i]);
         return;
     }
 
-    if (!(strcmp(args[0], "address") == 0 || strcmp(args[0], "remove-address") == 0)) {
+    if (!(strcmp(command->args[0], "address") == 0 || strcmp(command->args[0], "remove-address") == 0)) {
         printf("Invalid command!\n");
         return;
     }
 
-    if (arg_count != 2) {
-        printf("Usage: break %s <memory address (in Hex)>\n", args[0]);
+    if (command->arg_count != 2) {
+        printf("Usage: break %s <memory address (in Hex)>\n", command->args[0]);
         return;
     }
 
     // FIXME: Need to do better error handling here.
     // Does not currently account for junk values.
-    uint16_t address = (uint16_t)strtol(args[1], NULL, 0);
+    uint16_t address = (uint16_t)strtol(command->args[1], NULL, 0);
 
-    if (strcmp(args[0], "address") == 0) {
-        breakpoints->addresses[breakpoints->address_count] = address;
-        breakpoints->address_count++;
-    } else if (strcmp(args[0], "remove-address") == 0) {
+    if (strcmp(command->args[0], "address") == 0) {
+        debugger->break_addresses[debugger->break_address_count] = address;
+        debugger->break_address_count++;
+    } else if (strcmp(command->args[0], "remove-address") == 0) {
         int address_index = -1;
-        for (int i = 0; i < breakpoints->address_count; i++) {
-            if (breakpoints->addresses[i] == address) {
+        for (int i = 0; i < debugger->break_address_count; i++) {
+            if (debugger->break_addresses[i] == address) {
                 address_index = i;
                 break;
             }
         }
 
         if (address_index != -1) {
-            breakpoints->addresses[address_index] = 0;
+            debugger->break_addresses[address_index] = 0;
         } else {
             printf("Address does not currently have a breakpoint!\n");
         }
     }
 }
 
-void (*debugger_command_map[10]) (Emulator *emulator, char **args, int arg_count) = {
+void (*debugger_command_map[10]) (Debugger *debugger, DebuggerCommand *command) = {
     NULL,
     NULL,
     command_memory,
@@ -164,17 +164,13 @@ void (*debugger_command_map[10]) (Emulator *emulator, char **args, int arg_count
     command_registers,
     command_stack,
     command_step,
-    NULL
+    command_break
 };
 
 // Executes a debugger command against an Emulator instance.
-void execute_debugger_command(DebuggerCommand *command, Emulator *emulator, Breakpoints *breakpoints)
+void execute_debugger_command(Debugger *debugger, DebuggerCommand *command)
 {
-    if (command->type == BREAK) {
-        special_command_break(emulator, breakpoints, command->args, command->arg_count);
-        return;
-    }
-    debugger_command_map[command->type](emulator, command->args, command->arg_count);
+    debugger_command_map[command->type](debugger, command);
 }
 
 /*
@@ -235,10 +231,10 @@ int destroy_debugger_command(DebuggerCommand *command)
 }
 
 // Returns whether or not the debugger should break with the given state of the emulator.
-bool should_break(Emulator *emulator, Breakpoints *breakpoints)
+bool should_break(Debugger *debugger)
 {
-    for (int i = 0; i < breakpoints->address_count; i++)
-        if (breakpoints->addresses[i] == emulator->cpu.pc)
+    for (int i = 0; i < debugger->break_address_count; i++)
+        if (debugger->break_addresses[i] == debugger->emulator->cpu.pc)
             return true;
     return false;
 }
