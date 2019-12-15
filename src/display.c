@@ -36,6 +36,7 @@ void initialize_display(Display *display)
         DISPLAY_WIDTH * WINDOW_SCALE, DISPLAY_HEIGHT * WINDOW_SCALE, SDL_WINDOW_SHOWN
     );
     display->surface = SDL_GetWindowSurface(display->window);
+    clear_pixels(display);
 }
 
 void destroy_display(Display *display)
