@@ -139,12 +139,9 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             } else if (right == 4) {
                 // ADD Vx, Vy
                 emulator->cpu.registers[15] = 0;
-                uint16_t sum = emulator->cpu.registers[x] + emulator->cpu.registers[y];
-                if (sum > 255) {
-                    sum = 255;
-                    emulator->cpu.registers[15] = 1;
-                }
-                emulator->cpu.registers[x] = sum;
+                int sum = emulator->cpu.registers[x] + emulator->cpu.registers[y];
+                if (sum > 255) emulator->cpu.registers[15] = 1;
+                emulator->cpu.registers[x] = (uint8_t)sum;
             } else if (right == 5) {
                 // SUB Vx, Vy
                 emulator->cpu.registers[15] = 0;
@@ -154,17 +151,17 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
                 // SHR Vx {, Vy}
                 emulator->cpu.registers[15] = 0;
                 if (emulator->cpu.registers[x] & 1) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] /= 2;
+                emulator->cpu.registers[x] = emulator->cpu.registers[x] >> 1;
             } else if (right == 7) {
                 // SUBN Vx, Vy
                 emulator->cpu.registers[15] = 0;
                 if (emulator->cpu.registers[x] < emulator->cpu.registers[y]) emulator->cpu.registers[15] = 1;
                 emulator->cpu.registers[x] = emulator->cpu.registers[y] - emulator->cpu.registers[x];
-            } else if (right == 15) {
+            } else if (right == 14) {
                 // SHL Vx {, Vy}
                 emulator->cpu.registers[15] = 0;
                 if ((emulator->cpu.registers[x] >> 7) & 1) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] *= 2;
+                emulator->cpu.registers[x] = emulator->cpu.registers[x] << 1;
             }
 
             increment_pc(&(emulator->cpu));
@@ -201,14 +198,12 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             for (int i = 0; i < n; i++) {
                 uint8_t data = emulator->memory[emulator->cpu.I + i];
                 for (int j = 0; j < 8; j++) {
-                    int row = coord_y + i;
+                    int row = (coord_y + i) % DISPLAY_HEIGHT;
                     int col = (coord_x + (7 - j)) % DISPLAY_WIDTH;
                     int previous = emulator->display.pixels[row][col];
                     int new = previous ^= data & 0x1;
                     emulator->display.pixels[row][col] = new;
                     if (previous == 1 && new == 0)
-                        emulator->cpu.registers[15] = 1;
-                    if (new == 1 && (row == 0 || row == DISPLAY_HEIGHT - 1 || col == 0 || col == DISPLAY_WIDTH - 1))
                         emulator->cpu.registers[15] = 1;
                     data >>= 1;
                 }

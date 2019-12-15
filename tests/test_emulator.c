@@ -253,7 +253,7 @@ Test(emulator, test_SHL_Vx_Vy)
     initialize_emulator_no_display(&emulator);
     emulator.cpu.registers[0] = 2;
 
-    execute_instruction(&emulator, 0x800F);
+    execute_instruction(&emulator, 0x800E);
 
     cr_assert(emulator.cpu.registers[0] == 4);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
