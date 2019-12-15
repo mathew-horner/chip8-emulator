@@ -180,6 +180,7 @@ void execution_loop(Emulator *emulator)
                 }
             }
         }
+        //for (int i = 0; i < 9; i++)
         execute_next_instruction(emulator);
         render_frame(&(emulator->display));
         decrement_dt(&(emulator->cpu));

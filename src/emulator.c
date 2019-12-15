@@ -198,10 +198,10 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             for (int i = 0; i < n; i++) {
                 uint8_t data = emulator->memory[emulator->cpu.I + i];
                 for (int j = 0; j < 8; j++) {
-                    int row = (coord_y + i) % DISPLAY_HEIGHT;
-                    int col = (coord_x + (7 - j)) % DISPLAY_WIDTH;
+                    int row = (coord_y % DISPLAY_HEIGHT) + i;
+                    int col = (coord_x % DISPLAY_WIDTH) + (7 - j);
                     int previous = emulator->display.pixels[row][col];
-                    int new = previous ^= data & 0x1;
+                    int new = previous ^ data & 0x1;
                     emulator->display.pixels[row][col] = new;
                     if (previous == 1 && new == 0)
                         emulator->cpu.registers[15] = 1;
