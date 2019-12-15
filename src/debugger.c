@@ -48,12 +48,12 @@ void command_memory(Debugger *debugger, DebuggerCommand *command)
 
 void command_next(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("0x%x\n", next_instruction(debugger->emulator));
+    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.pc, next_instruction(debugger->emulator));
 }
 
 void command_previous(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("0x%x\n", previous_instruction(debugger->emulator));
+    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.pc, previous_instruction(debugger->emulator));
 }
 
 void command_register(Debugger *debugger, DebuggerCommand *command)
