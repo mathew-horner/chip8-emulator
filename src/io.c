@@ -6,7 +6,7 @@
 #include "memory.h"
 
 // Attempts to load the contents of a given file pointer into main memory.
-Chip8Error try_load_rom_file(Memory *memory, FILE *rom)
+Chip8Error try_load_rom_file(uint8_t *memory, FILE *rom)
 {
     // Determine the size of ROM for copying purposes and to determine if it
     // is too large to fit in main memory.
@@ -27,7 +27,7 @@ Chip8Error try_load_rom_file(Memory *memory, FILE *rom)
     int read = fread(rom_buffer, sizeof(uint8_t), size, rom);
 
     for (int i = 0; i < size; i++)
-        memory->values[PROGRAM_OFFSET + i] = rom_buffer[i];
+        memory[PROGRAM_OFFSET + i] = rom_buffer[i];
 
     free(rom_buffer);
     return 0;
@@ -35,7 +35,7 @@ Chip8Error try_load_rom_file(Memory *memory, FILE *rom)
 
 // A wrapper function for try_load_rom_file that will exit the program if an
 // error occurs loading the ROM.
-void load_rom(Memory *memory, char *filepath)
+void load_rom(uint8_t *memory, char *filepath)
 {
     FILE *rom = fopen(filepath, "r");
     if (!rom) {

@@ -8,7 +8,7 @@
 typedef struct emulator_t {
     CPU cpu;
     Display display;
-    Memory memory;
+    uint8_t memory[MEMORY_SIZE];
 } Emulator;
 
 void execute_instruction(Emulator *emulator, uint16_t instruction);

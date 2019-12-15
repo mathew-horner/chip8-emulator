@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         repl_loop(&emulator);
     } else {
         char *filepath = argv[1];
-        load_rom(&(emulator.memory), filepath);
+        load_rom(emulator.memory, filepath);
         initialize_cpu(&(emulator.cpu));
 
         if (argc > 2 && strcmp(argv[2], "--debug") == 0)

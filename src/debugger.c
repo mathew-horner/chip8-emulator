@@ -37,10 +37,10 @@ void command_memory(Debugger *debugger, DebuggerCommand *command)
     }
 
     for (int i = start; i <= end; i += bytes_per) {
-        unsigned int memory_value = debugger->emulator->memory.values[i];
+        unsigned int memory_value = debugger->emulator->memory[i];
         for (int j = 1; j < bytes_per; j++) {
             memory_value <<= 8;
-            memory_value |= debugger->emulator->memory.values[i + j];
+            memory_value |= debugger->emulator->memory[i + j];
         }
         printf("[0x%x] 0x%x\n", i, memory_value);
     }

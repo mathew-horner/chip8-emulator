@@ -375,9 +375,9 @@ Test(emulator, test_LD_B_Vx_3_digits)
 
     execute_instruction(&emulator, 0xF033);
 
-    cr_assert(emulator.memory.values[1024] == 2);
-    cr_assert(emulator.memory.values[1025] == 5);
-    cr_assert(emulator.memory.values[1026] == 5);
+    cr_assert(emulator.memory[1024] == 2);
+    cr_assert(emulator.memory[1025] == 5);
+    cr_assert(emulator.memory[1026] == 5);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
 }
 
@@ -390,9 +390,9 @@ Test(emulator, test_LD_B_Vx_2_digits)
 
     execute_instruction(&emulator, 0xF033);
 
-    cr_assert(emulator.memory.values[1024] == 0);
-    cr_assert(emulator.memory.values[1025] == 1);
-    cr_assert(emulator.memory.values[1026] == 6);
+    cr_assert(emulator.memory[1024] == 0);
+    cr_assert(emulator.memory[1025] == 1);
+    cr_assert(emulator.memory[1026] == 6);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
 }
 
@@ -405,9 +405,9 @@ Test(emulator, test_LD_B_Vx_1_digit)
 
     execute_instruction(&emulator, 0xF033);
 
-    cr_assert(emulator.memory.values[1024] == 0);
-    cr_assert(emulator.memory.values[1025] == 0);
-    cr_assert(emulator.memory.values[1026] == 3);
+    cr_assert(emulator.memory[1024] == 0);
+    cr_assert(emulator.memory[1025] == 0);
+    cr_assert(emulator.memory[1026] == 3);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
 }
 
@@ -420,9 +420,9 @@ Test(emulator, test_LD_B_Vx_0)
 
     execute_instruction(&emulator, 0xF033);
 
-    cr_assert(emulator.memory.values[1024] == 0);
-    cr_assert(emulator.memory.values[1025] == 0);
-    cr_assert(emulator.memory.values[1026] == 0);
+    cr_assert(emulator.memory[1024] == 0);
+    cr_assert(emulator.memory[1025] == 0);
+    cr_assert(emulator.memory[1026] == 0);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
 }
 
@@ -437,9 +437,9 @@ Test(emulator, test_LD_I_Vx)
 
     execute_instruction(&emulator, 0xF255);
 
-    cr_assert(emulator.memory.values[1024] == 0xFF);
-    cr_assert(emulator.memory.values[1025] == 0xAA);
-    cr_assert(emulator.memory.values[1026] == 0x2F);
+    cr_assert(emulator.memory[1024] == 0xFF);
+    cr_assert(emulator.memory[1025] == 0xAA);
+    cr_assert(emulator.memory[1026] == 0x2F);
     cr_assert(emulator.cpu.pc == PROGRAM_OFFSET + 2);
 }
 
@@ -447,9 +447,9 @@ Test(emulator, test_LD_Vx_I)
 {
     Emulator emulator;
     initialize_cpu(&(emulator.cpu));
-    emulator.memory.values[1024] = 0xFF;
-    emulator.memory.values[1025] = 0xAA;
-    emulator.memory.values[1026] = 0x2F;
+    emulator.memory[1024] = 0xFF;
+    emulator.memory[1025] = 0xAA;
+    emulator.memory[1026] = 0x2F;
     emulator.cpu.I = 1024;
 
     execute_instruction(&emulator, 0xF265);

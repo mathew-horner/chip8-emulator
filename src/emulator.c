@@ -142,17 +142,17 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
                 uint8_t x = (instruction >> 8) & 0xF;
                 uint8_t temp = emulator->cpu.registers[x];
                 for (int i = 2; i >= 0; i--) {
-                    emulator->memory.values[emulator->cpu.I + i] = temp % 10;
+                    emulator->memory[emulator->cpu.I + i] = temp % 10;
                     temp /= 10;
                 }
             } else if (right_two == 0x55) {
                 // LD [I], Vx
                 for (int i = 0; i <= x; i++)
-                    emulator->memory.values[emulator->cpu.I + i] = emulator->cpu.registers[i];
+                    emulator->memory[emulator->cpu.I + i] = emulator->cpu.registers[i];
             } else if (right_two == 0x65) {
                 // LD Vx, [I]
                 for (int i = 0; i <= x; i++)
-                    emulator->cpu.registers[i] = emulator->memory.values[emulator->cpu.I + i];
+                    emulator->cpu.registers[i] = emulator->memory[emulator->cpu.I + i];
             }
             increment_pc(&(emulator->cpu));
         } else {
@@ -171,7 +171,7 @@ void execute_next_instruction(Emulator *emulator)
 // Returns the instruction at the location of the PC.
 uint16_t next_instruction(Emulator *emulator)
 {
-    return (emulator->memory.values[emulator->cpu.pc] << 8) | emulator->memory.values[emulator->cpu.pc + 1];
+    return (emulator->memory[emulator->cpu.pc] << 8) | emulator->memory[emulator->cpu.pc + 1];
 }
 
 // Returns the instruction at the previous PC location.
@@ -179,5 +179,5 @@ uint16_t previous_instruction(Emulator *emulator)
 {
     if (emulator->cpu.previous_pc == 0)
         return 0;
-    return (emulator->memory.values[emulator->cpu.previous_pc] << 8) | emulator->memory.values[emulator->cpu.previous_pc + 1];
+    return (emulator->memory[emulator->cpu.previous_pc] << 8) | emulator->memory[emulator->cpu.previous_pc + 1];
 }
