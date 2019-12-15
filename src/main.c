@@ -83,14 +83,14 @@ int main(int argc, char *argv[])
 
     Emulator emulator;
     srand(time(0));
-    initialize_display(&(emulator.display));
 
     if (strcmp(argv[1], "--repl") == 0) {
+        initialize_display(&(emulator.display));
         repl_loop(&emulator);
     } else {
         char *filepath = argv[1];
+        initialize_emulator(&emulator);
         load_rom(emulator.memory, filepath);
-        initialize_cpu(&(emulator.cpu));
 
         if (argc > 2 && strcmp(argv[2], "--debug") == 0)
             debugger_loop(&emulator);

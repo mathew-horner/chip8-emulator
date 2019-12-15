@@ -1,8 +1,46 @@
 #include "emulator.h"
 
+int get_pressed_key(Emulator *emulator)
+{
+    int key_pressed = -1;
+    for (int i = 0; i < 16; i++) {
+        if (emulator->key_state[i]) {
+            key_pressed = i;
+            break;
+        }
+    }
+    return key_pressed;
+}
+
+// Sets the emulator to a state where it is ready to have a program loaded and begin execution.
+// Does not initialize the display element, for testing purposes.
+void initialize_emulator_no_display(Emulator *emulator)
+{
+    initialize_cpu(&(emulator->cpu));
+    emulator->waiting_for_key = false;
+    emulator->key_register = -1;
+    for (int i = 0; i < 16; i++)
+        emulator->key_state[i] = false;
+}
+
+// Sets the emulator to a state where it is ready to have a program loaded and begin execution.
+void initialize_emulator(Emulator *emulator)
+{
+    initialize_emulator_no_display(emulator);
+    initialize_display(&(emulator->display));
+}
+
 // Executes a single instruction and increments the PC if needed.
 void execute_instruction(Emulator *emulator, uint16_t instruction)
 {
+    if (emulator->waiting_for_key) {
+        int key_pressed = get_pressed_key(emulator);
+        if (key_pressed == -1) return;
+        emulator->cpu.registers[emulator->key_register] = key_pressed;
+        emulator->waiting_for_key = false;
+        emulator->key_register = -1;
+    }
+
     if (instruction == 0x00E0) {
         // CLS
         clear_pixels(&(emulator->display));
@@ -122,12 +160,34 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             uint8_t random = rand() % 256;
             emulator->cpu.registers[x] = random & byte;
             increment_pc(&(emulator->cpu));
+        } else if (left == 14) {
+            uint8_t right_two = instruction & 0xFF;
+            uint8_t x = (instruction >> 8) & 0xF;
+            if (right_two == 0x9E) {
+                // SKP Vx
+                if (emulator->key_state[emulator->cpu.registers[x]])
+                    increment_pc(&(emulator->cpu));
+            } else if (right_two == 0xA1) {
+                // SKNP Vx
+                if (!emulator->key_state[emulator->cpu.registers[x]])
+                    increment_pc(&(emulator->cpu));
+            }
+            increment_pc(&(emulator->cpu));
         } else if (left == 15) {
             uint8_t right_two = instruction & 0xFF;
             uint8_t x = (instruction >> 8) & 0xF;
             if (right_two == 0x07) {
                 // LD Vx, DT
                 emulator->cpu.registers[x] = emulator->cpu.dt;
+            } else if (right_two == 0x0A) {
+                // LD Vx, K
+                int key_pressed = get_pressed_key(emulator);
+                if (key_pressed != -1) {
+                    emulator->cpu.registers[x] = key_pressed;
+                } else {
+                    emulator->waiting_for_key = true;
+                    emulator->key_register = x;
+                }
             } else if (right_two == 0x15) {
                 // LD DT, Vx
                 emulator->cpu.dt = emulator->cpu.registers[x];

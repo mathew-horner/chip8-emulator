@@ -25,6 +25,7 @@ void initialize_cpu(CPU *cpu)
     cpu->dt = 0;
     cpu->st = 0;
     cpu->vf = 0;
+    cpu->I = 0;
 
     for (int i = 0; i < 16; i++) {
         cpu->registers[i] = 0;
