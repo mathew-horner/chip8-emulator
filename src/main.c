@@ -69,7 +69,117 @@ void debugger_loop(Emulator *emulator)
 
 void execution_loop(Emulator *emulator)
 {
-    while (1) {
+    bool quit = false;
+    SDL_Event e;
+
+    while (!quit) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                quit = true;
+            } else if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_1:
+                        emulator->key_state[1] = true;
+                        break;
+                    case SDLK_2:
+                        emulator->key_state[2] = true;
+                        break;
+                    case SDLK_3:
+                        emulator->key_state[3] = true;
+                        break;
+                    case SDLK_4:
+                        emulator->key_state[12] = true;
+                        break;
+                    case SDLK_q:
+                        emulator->key_state[4] = true;
+                        break;
+                    case SDLK_w:
+                        emulator->key_state[5] = true;
+                        break;
+                    case SDLK_e:
+                        emulator->key_state[6] = true;
+                        break;
+                    case SDLK_r:
+                        emulator->key_state[13] = true;
+                        break;
+                    case SDLK_a:
+                        emulator->key_state[7] = true;
+                        break;
+                    case SDLK_s:
+                        emulator->key_state[8] = true;
+                        break;
+                    case SDLK_d:
+                        emulator->key_state[9] = true;
+                        break;
+                    case SDLK_f:
+                        emulator->key_state[14] = true;
+                        break;
+                    case SDLK_z:
+                        emulator->key_state[10] = true;
+                        break;
+                    case SDLK_x:
+                        emulator->key_state[0] = true;
+                        break;
+                    case SDLK_c:
+                        emulator->key_state[11] = true;
+                        break;
+                    case SDLK_v:
+                        emulator->key_state[15] = true;
+                        break;
+                }
+            } else if (e.type == SDL_KEYUP) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_1:
+                        emulator->key_state[1] = false;
+                        break;
+                    case SDLK_2:
+                        emulator->key_state[2] = false;
+                        break;
+                    case SDLK_3:
+                        emulator->key_state[3] = false;
+                        break;
+                    case SDLK_4:
+                        emulator->key_state[12] = false;
+                        break;
+                    case SDLK_q:
+                        emulator->key_state[4] = false;
+                        break;
+                    case SDLK_w:
+                        emulator->key_state[5] = false;
+                        break;
+                    case SDLK_e:
+                        emulator->key_state[6] = false;
+                        break;
+                    case SDLK_r:
+                        emulator->key_state[13] = false;
+                        break;
+                    case SDLK_a:
+                        emulator->key_state[7] = false;
+                        break;
+                    case SDLK_s:
+                        emulator->key_state[8] = false;
+                        break;
+                    case SDLK_d:
+                        emulator->key_state[9] = false;
+                        break;
+                    case SDLK_f:
+                        emulator->key_state[14] = false;
+                        break;
+                    case SDLK_z:
+                        emulator->key_state[10] = false;
+                        break;
+                    case SDLK_x:
+                        emulator->key_state[0] = false;
+                        break;
+                    case SDLK_c:
+                        emulator->key_state[11] = false;
+                        break;
+                    case SDLK_v:
+                        emulator->key_state[15] = false;
+                        break;
+                }
+            }
+        }
         execute_next_instruction(emulator);
         render_frame(&(emulator->display));
         decrement_dt(&(emulator->cpu));
