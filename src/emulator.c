@@ -1,5 +1,26 @@
 #include "emulator.h"
 
+#define HEX_SPRITE_SIZE 80
+
+uint8_t hex_sprites[HEX_SPRITE_SIZE] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
 int get_pressed_key(Emulator *emulator)
 {
     int key_pressed = -1;
@@ -12,6 +33,12 @@ int get_pressed_key(Emulator *emulator)
     return key_pressed;
 }
 
+void load_hex_sprites(Emulator *emulator)
+{
+    for (int i = 0; i < HEX_SPRITE_SIZE; i++)
+        emulator->memory[i] = hex_sprites[i];
+}
+
 // Sets the emulator to a state where it is ready to have a program loaded and begin execution.
 // Does not initialize the display element, for testing purposes.
 void initialize_emulator_no_display(Emulator *emulator)
@@ -21,6 +48,7 @@ void initialize_emulator_no_display(Emulator *emulator)
     emulator->key_register = -1;
     for (int i = 0; i < 16; i++)
         emulator->key_state[i] = false;
+    load_hex_sprites(emulator);
 }
 
 // Sets the emulator to a state where it is ready to have a program loaded and begin execution.
@@ -60,7 +88,7 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
         } else if (left == 2) {
             // CALL addr
             emulator->cpu.sp++;
-            emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc;
+            emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc + 2;
             move_pc(&(emulator->cpu), instruction & 0xFFF);
         } else if (left == 3) {
             // SE Vx, byte
@@ -110,32 +138,32 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
                 emulator->cpu.registers[x] ^= emulator->cpu.registers[y];
             } else if (right == 4) {
                 // ADD Vx, Vy
-                emulator->cpu.vf = 0;
+                emulator->cpu.registers[15] = 0;
                 uint16_t sum = emulator->cpu.registers[x] + emulator->cpu.registers[y];
                 if (sum > 255) {
                     sum = 255;
-                    emulator->cpu.vf = 1;
+                    emulator->cpu.registers[15] = 1;
                 }
                 emulator->cpu.registers[x] = sum;
             } else if (right == 5) {
                 // SUB Vx, Vy
-                emulator->cpu.vf = 0;
-                if (emulator->cpu.registers[x] < emulator->cpu.registers[y]) emulator->cpu.vf = 1;
+                emulator->cpu.registers[15] = 0;
+                if (emulator->cpu.registers[x] > emulator->cpu.registers[y]) emulator->cpu.registers[15] = 1;
                 emulator->cpu.registers[x] -= emulator->cpu.registers[y];
             } else if (right == 6) {
                 // SHR Vx {, Vy}
-                emulator->cpu.vf = 0;
-                if (emulator->cpu.registers[x] & 1) emulator->cpu.vf = 1;
+                emulator->cpu.registers[15] = 0;
+                if (emulator->cpu.registers[x] & 1) emulator->cpu.registers[15] = 1;
                 emulator->cpu.registers[x] /= 2;
             } else if (right == 7) {
                 // SUBN Vx, Vy
-                emulator->cpu.vf = 0;
-                if (emulator->cpu.registers[x] < emulator->cpu.registers[y]) emulator->cpu.vf = 1;
+                emulator->cpu.registers[15] = 0;
+                if (emulator->cpu.registers[x] < emulator->cpu.registers[y]) emulator->cpu.registers[15] = 1;
                 emulator->cpu.registers[x] = emulator->cpu.registers[y] - emulator->cpu.registers[x];
             } else if (right == 15) {
                 // SHL Vx {, Vy}
-                emulator->cpu.vf = 0;
-                if ((emulator->cpu.registers[x] >> 7) & 1) emulator->cpu.vf = 1;
+                emulator->cpu.registers[15] = 0;
+                if ((emulator->cpu.registers[x] >> 7) & 1) emulator->cpu.registers[15] = 1;
                 emulator->cpu.registers[x] *= 2;
             }
 
@@ -159,6 +187,33 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             uint8_t byte = instruction & 0xFF;
             uint8_t random = rand() % 256;
             emulator->cpu.registers[x] = random & byte;
+            increment_pc(&(emulator->cpu));
+        } else if (left == 13) {
+            // DRW Vx, Vy, nibble
+            emulator->cpu.registers[15] = 0;
+            uint8_t x = (instruction >> 8) & 0xF;
+            uint8_t y = (instruction >> 4) & 0xF;
+            uint8_t n = (instruction) & 0xF;
+            
+            int coord_x = emulator->cpu.registers[x];
+            int coord_y = emulator->cpu.registers[y];
+
+            for (int i = 0; i < n; i++) {
+                uint8_t data = emulator->memory[emulator->cpu.I + i];
+                for (int j = 0; j < 8; j++) {
+                    int row = coord_y + i;
+                    int col = (coord_x + (7 - j)) % DISPLAY_WIDTH;
+                    int previous = emulator->display.pixels[row][col];
+                    int new = previous ^= data & 0x1;
+                    emulator->display.pixels[row][col] = new;
+                    if (previous == 1 && new == 0)
+                        emulator->cpu.registers[15] = 1;
+                    if (new == 1 && (row == 0 || row == DISPLAY_HEIGHT - 1 || col == 0 || col == DISPLAY_WIDTH - 1))
+                        emulator->cpu.registers[15] = 1;
+                    data >>= 1;
+                }
+            }
+
             increment_pc(&(emulator->cpu));
         } else if (left == 14) {
             uint8_t right_two = instruction & 0xFF;
@@ -197,6 +252,9 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
             } else if (right_two == 0x1E) {
                 // ADD I, Vx
                 emulator->cpu.I += emulator->cpu.registers[x];
+            } else if (right_two == 0x29) {
+                // LD F, Vx
+                emulator->cpu.I = emulator->cpu.registers[x] * 5;
             } else if (right_two == 0x33) {
                 // LD B, Vx
                 uint8_t x = (instruction >> 8) & 0xF;

@@ -24,11 +24,16 @@ void initialize_cpu(CPU *cpu)
     cpu->sp = -1;
     cpu->dt = 0;
     cpu->st = 0;
-    cpu->vf = 0;
     cpu->I = 0;
 
     for (int i = 0; i < 16; i++) {
         cpu->registers[i] = 0;
         cpu->stack[i] = 0;
     }
+}
+
+void decrement_dt(CPU *cpu)
+{
+    if (cpu->dt > 0)
+        cpu->dt--;
 }

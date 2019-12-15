@@ -63,6 +63,7 @@ void debugger_loop(Emulator *emulator)
         }
 
         render_frame(&(emulator->display));
+        decrement_dt(&(emulator->cpu));
     }
 }
 
@@ -71,6 +72,7 @@ void execution_loop(Emulator *emulator)
     while (1) {
         execute_next_instruction(emulator);
         render_frame(&(emulator->display));
+        decrement_dt(&(emulator->cpu));
     }
 }
 

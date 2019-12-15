@@ -50,7 +50,7 @@ Test(emulator, test_CALL_addr)
     execute_instruction(&emulator, 0x2400);
 
     cr_assert(emulator.cpu.sp == 0);
-    cr_assert(emulator.cpu.stack[0] == PROGRAM_OFFSET);
+    cr_assert(emulator.cpu.stack[0] == PROGRAM_OFFSET + 2);
     cr_assert(emulator.cpu.pc == 1024);
 }
 
