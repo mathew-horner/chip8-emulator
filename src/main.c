@@ -8,8 +8,9 @@
 #include "emulator.h"
 #include "io.h"
 
+#define FRAME_RATE 60
+#define FRAME_INTERVAL_NS 1000000000 / FRAME_RATE
 #define INSTRUCTIONS_PER_FRAME 9
-#define FRAME_INTERVAL_NS 1000000000 / 60
 
 void repl_loop(Emulator *emulator)
 {
@@ -70,16 +71,23 @@ void debugger_loop(Emulator *emulator)
     }
 }
 
-void execution_loop(Emulator *emulator)
+// Sleeps long enough to fill up the rest of the frame interval. (As to maintain a constant frame rate).
+void prerender_sleep(double elapsed)
 {
-    clock_t start_frame;
     struct timespec sleep_time;
     sleep_time.tv_sec = 0;
+    sleep_time.tv_nsec = FRAME_INTERVAL_NS - elapsed;
+    nanosleep(&sleep_time, NULL);
+}
+
+void execution_loop(Emulator *emulator)
+{
+    clock_t frame_start;
     bool quit = false;
     SDL_Event e;
 
     while (!quit) {
-        start_frame = clock() / CLOCKS_PER_SEC;
+        frame_start = clock() / CLOCKS_PER_SEC;
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
@@ -194,10 +202,8 @@ void execution_loop(Emulator *emulator)
         
         decrement_dt(&(emulator->cpu));
         clock_t now = clock() / CLOCKS_PER_SEC;
-        sleep_time.tv_nsec = FRAME_INTERVAL_NS - ((double)(now - start_frame) * 1000000000);
-        nanosleep(&sleep_time, NULL);
+        prerender_sleep((double)(now - frame_start));
         render_frame(&(emulator->display));
-
     }
 }
 
