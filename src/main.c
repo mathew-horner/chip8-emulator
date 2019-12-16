@@ -8,6 +8,9 @@
 #include "emulator.h"
 #include "io.h"
 
+#define INSTRUCTIONS_PER_FRAME 9
+#define FRAME_INTERVAL_NS 1000000000 / 60
+
 void repl_loop(Emulator *emulator)
 {
     char input[5];
@@ -62,17 +65,22 @@ void debugger_loop(Emulator *emulator)
             execute_next_instruction(emulator);
         }
 
-        render_frame(&(emulator->display));
         decrement_dt(&(emulator->cpu));
+        render_frame(&(emulator->display));
     }
 }
 
 void execution_loop(Emulator *emulator)
 {
+    clock_t start_frame;
+    struct timespec sleep_time;
+    sleep_time.tv_sec = 0;
     bool quit = false;
     SDL_Event e;
 
     while (!quit) {
+        start_frame = clock() / CLOCKS_PER_SEC;
+
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = true;
@@ -180,10 +188,16 @@ void execution_loop(Emulator *emulator)
                 }
             }
         }
-        //for (int i = 0; i < 9; i++)
-        execute_next_instruction(emulator);
-        render_frame(&(emulator->display));
+        
+        for (int i = 0; i < INSTRUCTIONS_PER_FRAME; i++)
+            execute_next_instruction(emulator);
+        
         decrement_dt(&(emulator->cpu));
+        clock_t now = clock() / CLOCKS_PER_SEC;
+        sleep_time.tv_nsec = FRAME_INTERVAL_NS - ((double)(now - start_frame) * 1000000000);
+        nanosleep(&sleep_time, NULL);
+        render_frame(&(emulator->display));
+
     }
 }
 
