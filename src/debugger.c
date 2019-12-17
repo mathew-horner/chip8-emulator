@@ -53,7 +53,11 @@ void command_next(Debugger *debugger, DebuggerCommand *command)
 
 void command_previous(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.pc, previous_instruction(debugger->emulator));
+    if (debugger->emulator->cpu.previous_pc == 0) {
+        printf("No instructions have been executed yet!\n");
+        return;
+    }
+    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.previous_pc, previous_instruction(debugger->emulator));
 }
 
 void command_register(Debugger *debugger, DebuggerCommand *command)
