@@ -25,7 +25,8 @@ typedef enum debugger_command_type_t {
     REGISTERS,
     STACK,
     STEP,
-    BREAK
+    BREAK,
+    HELP
 } DebuggerCommandType;
 
 typedef struct debugger_command_t {

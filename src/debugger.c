@@ -154,7 +154,28 @@ void command_break(Debugger *debugger, DebuggerCommand *command)
     }
 }
 
-void (*debugger_command_map[10]) (Debugger *debugger, DebuggerCommand *command) = {
+void command_help(Debugger *debugger, DebuggerCommand *command)
+{
+    printf("exit: Exits the process.\n");
+    printf("step: Executes the next instruction.\n");
+    printf("next: Displays the next instruction in hexidecimal format.\n");
+    printf("previous: Displays the previous instruction in hexidecimal format.\n");
+    printf("register <v>: Displays the contents of a single CPU register (can be dt, st, I, or any number 0-15).\n");
+    printf("registers: Displays the contents of every CPU register.\n");
+    printf("memory <start> <end> [chunk size]: Displays the contents of memory from addresses start:end (given in hexidecimal form). You can also supply a chunk size argument of 1, 2, or 4 - which will specify whether the command will display the memory in 8-bit, 16-bit, or 32-bit format.\n");
+    printf("    Example: memory 0x200 0x203 2\n\n");
+    printf("    Output\n");
+    printf("    [0x200] 0x2f8b\n");
+    printf("    [0x202] 0xffff\n");
+    printf("break address <memory address (in Hex)>: Sets a breakpoint for the instruction at the given memory address.\n");
+    printf("break remove-address <memory address (in Hex)>: Removes the breakpoint at the given memory  address.\n");
+    printf("break list-address: Lists all addresses that have breakpoints.\n");
+    printf("continue: Resumes execution until the next breakpoint is hit.\n");
+    printf("stack full: Displays the entire stack.\n");
+    printf("stack peek: Displays the top value of the stack.\n");
+}
+
+void (*debugger_command_map[11]) (Debugger *debugger, DebuggerCommand *command) = {
     NULL,
     NULL,
     command_memory,
@@ -164,7 +185,8 @@ void (*debugger_command_map[10]) (Debugger *debugger, DebuggerCommand *command) 
     command_registers,
     command_stack,
     command_step,
-    command_break
+    command_break,
+    command_help
 };
 
 // Executes a debugger command against an Emulator instance.
@@ -205,6 +227,8 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
         command->type = STEP;
     else if (strcmp(input, "break") == 0)
         command->type = BREAK;
+    else if (strcmp(input, "help") == 0)
+        command->type = HELP;
     else
         return 1;
     
