@@ -23,6 +23,27 @@ Then you can run the emulator by specifying a ROM file to load.
 ```
 ./dist/chip8-emulator <rom path>
 ```
+
+## Controls
+
+The controls currently are not customizable. The following tables show how your keyboard maps to CHIP-8's 4x4 keypad.
+
+CHIP-8 Controls
+
+| 1 | 2 | 3 | C |
+|---|---|---|---|
+| 4 | 5 | 6 | D |
+| 7 | 8 | 9 | E |
+| A | 0 | B | F |
+
+Keyboard
+
+| 1 | 2 | 3 | 4 |
+|---|---|---|---|
+| q | w | e | r |
+| a | s | d | f |
+| z | x | c | v |
+
 ## Debugger
 
 This emulator has a rudimentary debugger build in. You can run the emulator in debug mode to access it.
