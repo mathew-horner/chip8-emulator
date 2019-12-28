@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "debugger.h"
+#include "disassemble.h"
 #include "memory.h"
 
 void print_register_values(CPU *cpu)
@@ -46,9 +47,17 @@ void command_memory(Debugger *debugger, DebuggerCommand *command)
     }
 }
 
+
+void print_instruction(uint16_t instruction, uint16_t address)
+{
+    char *assembly = disassemble_instruction(instruction);
+    printf("[0x%x] %s\n", address, assembly);
+    free(assembly);
+}
+
 void command_next(Debugger *debugger, DebuggerCommand *command)
 {
-    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.pc, next_instruction(debugger->emulator));
+    print_instruction(next_instruction(debugger->emulator), debugger->emulator->cpu.pc);
 }
 
 void command_previous(Debugger *debugger, DebuggerCommand *command)
@@ -57,7 +66,7 @@ void command_previous(Debugger *debugger, DebuggerCommand *command)
         printf("No instructions have been executed yet!\n");
         return;
     }
-    printf("[0x%x] 0x%x\n", debugger->emulator->cpu.previous_pc, previous_instruction(debugger->emulator));
+    print_instruction(previous_instruction(debugger->emulator), debugger->emulator->cpu.previous_pc);
 }
 
 void command_register(Debugger *debugger, DebuggerCommand *command)
@@ -162,8 +171,8 @@ void command_help(Debugger *debugger, DebuggerCommand *command)
 {
     printf("exit: Exits the process.\n");
     printf("step: Executes the next instruction.\n");
-    printf("next: Displays the next instruction in hexidecimal format.\n");
-    printf("previous: Displays the previous instruction in hexidecimal format.\n");
+    printf("next: Displays the next instruction.\n");
+    printf("previous: Displays the previous instruction.\n");
     printf("register <v>: Displays the contents of a single CPU register (can be dt, st, I, or any number 0-15).\n");
     printf("registers: Displays the contents of every CPU register.\n");
     printf("memory <start> <end> [chunk size]: Displays the contents of memory from addresses start:end (given in hexidecimal form). You can also supply a chunk size argument of 1, 2, or 4 - which will specify whether the command will display the memory in 8-bit, 16-bit, or 32-bit format.\n");
@@ -261,6 +270,7 @@ int destroy_debugger_command(DebuggerCommand *command)
 // Returns whether or not the debugger should break with the given state of the emulator.
 bool should_break(Debugger *debugger)
 {
+    // TODO: Use a set implementation here for O(1) lookup?
     for (int i = 0; i < debugger->break_address_count; i++)
         if (debugger->break_addresses[i] == debugger->emulator->cpu.pc)
             return true;
