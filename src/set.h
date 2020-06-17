@@ -11,10 +11,10 @@ typedef struct set_t {
     int count;
 } Set;
 
-void initialize(Set *set);
-int add(Set *set, int value);
-int remove(Set *set, int value);
-bool contains(Set *set, int value);
-void destroy(Set *set);
+void set_initialize(Set *set);
+void set_add(Set *set, int value);
+void set_remove(Set *set, int value);
+bool set_contains(Set *set, int value);
+void set_destroy(Set *set);
 
 #endif

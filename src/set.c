@@ -1,43 +1,6 @@
 #include "set.h"
 #include <stdlib.h>
 
-void initialize(Set *set)
-{
-    set->values = (int *)malloc(INITIAL_SET_SIZE * sizeof(int));
-    set->size = INITIAL_SET_SIZE;
-}
-
-int add(Set *set, int value)
-{
-    if (set->count == set->size)
-        double_size(set);
-    set->values[set->count] = value;
-    set->count++;
-}
-
-int remove(Set *set, int value)
-{
-    set->values[set->count - 1] = 0;
-    set->count--;
-}
-
-bool contains(Set *set, int value)
-{
-    for (int i = 0; i < set->count; i++) {
-        if (set->values[i] == value)
-            return true;
-    }
-
-    return false;
-}
-
-void destroy(Set *set)
-{
-    free(set->values);
-    set->size = 0;
-    set->count = 0;
-}
-
 void double_size(Set *set)
 {
     int *new = (int *)malloc(set->size * 2 * sizeof(int));
@@ -48,3 +11,49 @@ void double_size(Set *set)
     free(set->values);
     set->values = new;
 }
+
+void set_initialize(Set *set)
+{
+    set->values = (int *)malloc(INITIAL_SET_SIZE * sizeof(int));
+    set->size = INITIAL_SET_SIZE;
+    for (int i = 0; i < set->size; i++)
+        set->values[i] = -1;
+}
+
+void set_add(Set *set, int value)
+{
+    // todo: duplicate check
+    if (set->count == set->size)
+        double_size(set);
+    set->values[set->count] = value;
+    set->count++;
+}
+
+void set_remove(Set *set, int value)
+{
+    for (int i = 0; i < set->size; i++) {
+        if (set->values[i] == value) {
+            set->values[i] = -1;
+            set->count--;
+            return;
+        }
+    }
+}
+
+bool set_contains(Set *set, int value)
+{
+    for (int i = 0; i < set->size; i++) {
+        if (set->values[i] == value)
+            return true;
+    }
+
+    return false;
+}
+
+void set_destroy(Set *set)
+{
+    free(set->values);
+    set->size = 0;
+    set->count = 0;
+}
+
