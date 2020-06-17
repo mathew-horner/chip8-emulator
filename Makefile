@@ -1,4 +1,4 @@
-SOURCE_FILES = src/cpu.c src/debugger.c src/disassemble.c src/display.c src/emulator.c src/errors.c src/io.c
+SOURCE_FILES = src/cpu.c src/debugger.c src/disassemble.c src/display.c src/emulator.c src/errors.c src/io.c src/set.c
 TEST_FILES = tests/test_cpu.c tests/test_emulator.c
 
 emu:
