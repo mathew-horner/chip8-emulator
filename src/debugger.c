@@ -4,6 +4,12 @@
 #include "disassemble.h"
 #include "memory.h"
 
+void initialize_debugger(Debugger *debugger)
+{
+    debugger->break_addresses = (Set *)malloc(sizeof(Set));
+    set_initialize(debugger->break_addresses);
+}
+
 void print_register_values(CPU *cpu)
 {
     printf("I: 0x%x\n", cpu->I);
@@ -127,9 +133,9 @@ void command_break(Debugger *debugger, DebuggerCommand *command)
     }
     
     if (strcmp(command->args[0], "list-address") == 0) {
-        for (int i = 0; i < debugger->break_address_count; i++)
-            if (debugger->break_addresses[i] != 0)
-                printf("0x%x\n", debugger->break_addresses[i]);
+        for (int i = 0; i < debugger->break_addresses->count; i++)
+            if (debugger->break_addresses->values[i] != -1)
+                printf("0x%x\n", debugger->break_addresses->values[i]);
         return;
     }
 
@@ -148,22 +154,11 @@ void command_break(Debugger *debugger, DebuggerCommand *command)
     uint16_t address = (uint16_t)strtol(command->args[1], NULL, 0);
 
     if (strcmp(command->args[0], "address") == 0) {
-        debugger->break_addresses[debugger->break_address_count] = address;
-        debugger->break_address_count++;
+        set_add(debugger->break_addresses, address);
     } else if (strcmp(command->args[0], "remove-address") == 0) {
-        int address_index = -1;
-        for (int i = 0; i < debugger->break_address_count; i++) {
-            if (debugger->break_addresses[i] == address) {
-                address_index = i;
-                break;
-            }
-        }
-
-        if (address_index != -1) {
-            debugger->break_addresses[address_index] = 0;
-        } else {
+        int result = set_remove(debugger->break_addresses, address);
+        if (result == 1)
             printf("Address does not currently have a breakpoint!\n");
-        }
     }
 }
 
@@ -270,8 +265,5 @@ int destroy_debugger_command(DebuggerCommand *command)
 // Returns whether or not the debugger should break with the given state of the emulator.
 bool should_break(Debugger *debugger)
 {
-    for (int i = 0; i < debugger->break_address_count; i++)
-        if (debugger->break_addresses[i] == debugger->emulator->cpu.pc)
-            return true;
-    return false;
+    return set_contains(debugger->break_addresses, debugger->emulator->cpu.pc);
 }

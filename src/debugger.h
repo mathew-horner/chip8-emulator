@@ -5,14 +5,11 @@
 
 #include <stdbool.h>
 #include "emulator.h"
-
+#include "set.h"
 
 typedef struct debugger_t {
     Emulator *emulator;
-
-    // TODO: This should be dynamically allocated. Implement a resizable array?
-    uint16_t break_addresses[4096];
-    int break_address_count;
+    Set *break_addresses;
 } Debugger;
 
 typedef enum debugger_command_type_t {
@@ -35,6 +32,7 @@ typedef struct debugger_command_t {
     int arg_count;
 } DebuggerCommand;
 
+void initialize_debugger(Debugger *debugger);
 int parse_debugger_command(char *input, DebuggerCommand *command);
 int destroy_debugger_command(DebuggerCommand *command);
 void execute_debugger_command(Debugger *debugger, DebuggerCommand *command);

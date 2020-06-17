@@ -29,15 +29,17 @@ void set_add(Set *set, int value)
     set->count++;
 }
 
-void set_remove(Set *set, int value)
+int set_remove(Set *set, int value)
 {
     for (int i = 0; i < set->size; i++) {
         if (set->values[i] == value) {
             set->values[i] = -1;
             set->count--;
-            return;
+            return 0;
         }
     }
+
+    return 1;
 }
 
 bool set_contains(Set *set, int value)
