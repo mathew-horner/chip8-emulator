@@ -43,6 +43,8 @@ void load_hex_sprites(Emulator *emulator)
 // Does not initialize the display element, for testing purposes.
 void initialize_emulator_no_display(Emulator *emulator)
 {
+    for (int i = 0; i < MEMORY_SIZE; i++)
+        emulator->memory[i] = 0;
     initialize_cpu(&(emulator->cpu));
     emulator->waiting_for_key = false;
     emulator->key_register = -1;

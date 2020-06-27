@@ -47,17 +47,16 @@ void command_memory(Debugger *debugger, DebuggerCommand *command)
     }
 }
 
-
-void print_instruction(uint16_t instruction, uint16_t address)
+void print_instruction(uint16_t instruction, uint16_t address, bool arrow)
 {
     char *assembly = disassemble_instruction(instruction);
-    printf("[0x%x] %s\n", address, assembly);
+    printf("[0x%x] %s%s\n", address, arrow ? "> " : "", assembly);
     free(assembly);
 }
 
 void command_next(Debugger *debugger, DebuggerCommand *command)
 {
-    print_instruction(next_instruction(debugger->emulator), debugger->emulator->cpu.pc);
+    print_instruction(next_instruction(debugger->emulator), debugger->emulator->cpu.pc, false);
 }
 
 void command_previous(Debugger *debugger, DebuggerCommand *command)
@@ -66,7 +65,7 @@ void command_previous(Debugger *debugger, DebuggerCommand *command)
         printf("No instructions have been executed yet!\n");
         return;
     }
-    print_instruction(previous_instruction(debugger->emulator), debugger->emulator->cpu.previous_pc);
+    print_instruction(previous_instruction(debugger->emulator), debugger->emulator->cpu.previous_pc, false);
 }
 
 void command_register(Debugger *debugger, DebuggerCommand *command)
@@ -186,9 +185,28 @@ void command_help(Debugger *debugger, DebuggerCommand *command)
     printf("continue: Resumes execution until the next breakpoint is hit.\n");
     printf("stack full: Displays the entire stack.\n");
     printf("stack peek: Displays the top value of the stack.\n");
+    printf("context <n>: Shows the n instructions surrounding the instruction being pointed to by the PC.\n");
 }
 
-void (*debugger_command_map[11]) (Debugger *debugger, DebuggerCommand *command) = {
+void command_context(Debugger *debugger, DebuggerCommand *command)
+{
+    int n = atoi(command->args[0]);
+    int pc = debugger->emulator->cpu.pc;
+    int start = pc - (n * 2);
+    int end = pc + (n * 2) + 1;
+
+    if (start < PROGRAM_OFFSET) start = PROGRAM_OFFSET;
+
+    // todo: this should only read until the end of program ROM.
+    if (end >= MEMORY_SIZE - 1) end = MEMORY_SIZE - 2;
+
+    for (int i = start; i < end; i += 2) {
+        uint16_t instruction = debugger->emulator->memory[i] << 8 | debugger->emulator->memory[i + 1];
+        print_instruction(instruction, i, i == pc);
+    }
+}
+
+void (*debugger_command_map[12]) (Debugger *debugger, DebuggerCommand *command) = {
     NULL,
     NULL,
     command_memory,
@@ -199,7 +217,8 @@ void (*debugger_command_map[11]) (Debugger *debugger, DebuggerCommand *command) 
     command_stack,
     command_step,
     command_break,
-    command_help
+    command_help,
+    command_context
 };
 
 // Executes a debugger command against an Emulator instance.
@@ -242,6 +261,8 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
         command->type = BREAK;
     else if (strcmp(input, "help") == 0)
         command->type = HELP;
+    else if (strcmp(input, "context") == 0)
+        command->type = CONTEXT;
     else
         return 1;
     

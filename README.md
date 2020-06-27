@@ -77,6 +77,7 @@ The debugger currently supports the following commands...
 * `continue`: Resumes execution until the next breakpoint is hit.
 * `stack full`: Displays the entire stack.
 * `stack peek`: Displays the top value of the stack.
+* `context <n>`: Shows the n instructions surrounding the instruction being pointed to by the PC.
 
 ## REPL
 
