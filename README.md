@@ -4,6 +4,8 @@ This is an implementation of the CHIP-8 system made strictly for fun.
 
 Linux is the only supported Operating System at this time.
 
+![screenshot](resources/screenshot.png)
+
 ## Dependencies
 * GNU Make
 * SDL 2.0
