@@ -1,5 +1,7 @@
 #include "display.h"
 
+#define TITLE "Chip 8 Emulator"
+
 // Renders the contents of the pixel buffer onto the screen.
 void render_frame(Display *display)
 {
@@ -32,7 +34,7 @@ void initialize_display(Display *display)
 {
     SDL_Init(SDL_INIT_VIDEO);
     display->window = SDL_CreateWindow(
-        "Chip 8 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         DISPLAY_WIDTH * WINDOW_SCALE, DISPLAY_HEIGHT * WINDOW_SCALE, SDL_WINDOW_SHOWN
     );
     display->surface = SDL_GetWindowSurface(display->window);
@@ -43,4 +45,11 @@ void destroy_display(Display *display)
 {
     SDL_DestroyWindow(display->window);
     SDL_Quit();
+}
+
+void set_title(Display *display, const char *program)
+{
+    char *full_title = (char *)malloc((4 + strlen(TITLE) + strlen(program)) * sizeof(char));
+    sprintf(full_title, "%s (%s)", TITLE, program);
+    SDL_SetWindowTitle(display->window, (const char *)full_title);
 }

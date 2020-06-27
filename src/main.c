@@ -207,6 +207,19 @@ void execution_loop(Emulator *emulator)
     }
 }
 
+void raw_filename(const char *filepath, char **filename)
+{
+    int lastslash = (int)(strrchr(filepath, '/') - filepath);
+    int period = (int)(strchr(filepath, '.') - filepath);
+    int size = period - lastslash;
+    *filename = (char *)malloc(size * sizeof(char));
+
+    for (int i = 0; i < size - 1; i++)
+        (*filename)[i] = filepath[lastslash + i + 1];
+    
+    (*filename)[size - 1] = '\0';
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -224,6 +237,11 @@ int main(int argc, char *argv[])
         char *filepath = argv[1];
         initialize_emulator(&emulator);
         load_rom(emulator.memory, filepath);
+
+        char *game_title;
+        raw_filename(filepath, &game_title);
+        set_title(&emulator.display, game_title);
+        free(game_title);
 
         if (argc > 2 && strcmp(argv[2], "--debug") == 0)
             debugger_loop(&emulator);

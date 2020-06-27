@@ -18,5 +18,6 @@ void initialize_display(Display *display);
 void render_frame(Display *display);
 void destroy_display(Display *display);
 void clear_pixels(Display *display);
+void set_title(Display *display, const char *program);
 
 #endif
