@@ -4,14 +4,19 @@
 #include "cpu.h"
 #include "display.h"
 #include "memory.h"
+#include "time_travel.h"
 
 typedef struct emulator_t {
     CPU cpu;
     Display display;
     uint8_t memory[MEMORY_SIZE];
+    
     bool key_state[16];
     bool waiting_for_key;
     int key_register;
+
+    bool record_execution;
+    ExecutedInstruction *execution_record_ptr;
 } Emulator;
 
 void initialize_emulator(Emulator *emulator);

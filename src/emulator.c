@@ -60,6 +60,18 @@ void initialize_emulator(Emulator *emulator)
     initialize_display(&(emulator->display));
 }
 
+void add_execution_record(Emulator *emulator, InstructionType type, void *data)
+{
+    ExecutedInstruction *instruction = (ExecutedInstruction*)malloc(sizeof(ExecutedInstruction));
+    instruction->type = type;
+    instruction->data = data;
+
+    if (emulator->execution_record_ptr != NULL)
+        instruction->previous = emulator->execution_record_ptr;
+
+    emulator->execution_record_ptr = instruction;
+}
+
 // Executes a single instruction and increments the PC if needed.
 void execute_instruction(Emulator *emulator, uint16_t instruction)
 {
@@ -86,6 +98,11 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
 
         if (left == 1) {
             // JP addr
+            if (emulator->record_execution) {
+                int *pc = (int *)malloc(sizeof(int));
+                *pc = emulator->cpu.pc;
+                add_execution_record(emulator, JP_ADDR, (void*)pc);
+            }
             move_pc(&(emulator->cpu), instruction & 0xFFF);
         } else if (left == 2) {
             // CALL addr

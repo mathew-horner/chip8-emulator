@@ -243,10 +243,12 @@ int main(int argc, char *argv[])
         set_title(&emulator.display, game_title);
         free(game_title);
 
-        if (argc > 2 && strcmp(argv[2], "--debug") == 0)
+        if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
+            emulator.record_execution = true;
             debugger_loop(&emulator);
-        else
+        } else {
             execution_loop(&emulator);
+        }
     }
 
     destroy_display(&(emulator.display));
