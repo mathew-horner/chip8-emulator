@@ -1,4 +1,5 @@
 #include "emulator.h"
+#include <string.h>
 
 #define HEX_SPRITE_SIZE 80
 
@@ -43,13 +44,11 @@ void load_hex_sprites(Emulator *emulator)
 // Does not initialize the display element, for testing purposes.
 void initialize_emulator_no_display(Emulator *emulator)
 {
-    for (int i = 0; i < MEMORY_SIZE; i++)
-        emulator->memory[i] = 0;
+    memset(&emulator->memory, 0, MEMORY_SIZE);
     initialize_cpu(&(emulator->cpu));
     emulator->waiting_for_key = false;
     emulator->key_register = -1;
-    for (int i = 0; i < 16; i++)
-        emulator->key_state[i] = false;
+    memset(&emulator->key_state, false, 16);
     load_hex_sprites(emulator);
 }
 

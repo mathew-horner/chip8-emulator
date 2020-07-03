@@ -24,10 +24,7 @@ void render_frame(Display *display)
 // Resets the pixel buffer back to all 0s (Black).
 void clear_pixels(Display *display)
 {
-    for (int i = 0; i < DISPLAY_HEIGHT; i++) {
-        for (int j = 0; j < DISPLAY_WIDTH; j++)
-            display->pixels[i][j] = 0;
-    }
+    memset(&display->pixels, 0, DISPLAY_HEIGHT * DISPLAY_WIDTH);
 }
 
 void initialize_display(Display *display)

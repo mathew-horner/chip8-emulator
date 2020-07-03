@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "io.h"
 #include "errors.h"
 #include "memory.h"
@@ -25,10 +26,7 @@ Chip8Error try_load_rom_file(uint8_t *memory, FILE *rom)
     // copied to main memory.
     uint8_t *rom_buffer = (uint8_t*)malloc(size * sizeof(uint8_t));
     int read = fread(rom_buffer, sizeof(uint8_t), size, rom);
-
-    for (int i = 0; i < size; i++)
-        memory[PROGRAM_OFFSET + i] = rom_buffer[i];
-
+    memcpy(memory + PROGRAM_OFFSET, rom_buffer, size);
     free(rom_buffer);
     return 0;
 }

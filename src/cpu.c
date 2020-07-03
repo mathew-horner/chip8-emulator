@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "cpu.h"
 #include "memory.h"
 
@@ -25,11 +26,8 @@ void initialize_cpu(CPU *cpu)
     cpu->dt = 0;
     cpu->st = 0;
     cpu->I = 0;
-
-    for (int i = 0; i < 16; i++) {
-        cpu->registers[i] = 0;
-        cpu->stack[i] = 0;
-    }
+    memset(&cpu->registers, 0, 16);
+    memset(&cpu->stack, 0, 16);
 }
 
 void decrement_dt(CPU *cpu)

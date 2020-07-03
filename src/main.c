@@ -213,10 +213,7 @@ void raw_filename(const char *filepath, char **filename)
     int period = (int)(strchr(filepath, '.') - filepath);
     int size = period - lastslash;
     *filename = (char *)malloc(size * sizeof(char));
-
-    for (int i = 0; i < size - 1; i++)
-        (*filename)[i] = filepath[lastslash + i + 1];
-    
+    memcpy(*filename, filepath + lastslash + 1, size - 1);
     (*filename)[size - 1] = '\0';
 }
 
