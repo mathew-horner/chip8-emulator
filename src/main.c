@@ -243,9 +243,11 @@ int main(int argc, char *argv[])
         set_title(&emulator.display, game_title);
         free(game_title);
 
-        if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
-            emulator.record_execution = true;
-            debugger_loop(&emulator);
+        if (argc > 2) {
+            if (strcmp(argv[2], "--debug-no-tt") == 0 || strcmp(argv[2], "--debug") == 0) {
+                emulator.record_execution = strcmp(argv[2], "--debug") == 0;
+                debugger_loop(&emulator);
+            }
         } else {
             execution_loop(&emulator);
         }

@@ -51,6 +51,8 @@ void initialize_emulator_no_display(Emulator *emulator)
     for (int i = 0; i < 16; i++)
         emulator->key_state[i] = false;
     load_hex_sprites(emulator);
+    emulator->record_execution = false;
+    emulator->execution_record_ptr = NULL;
 }
 
 // Sets the emulator to a state where it is ready to have a program loaded and begin execution.
@@ -312,4 +314,187 @@ uint16_t previous_instruction(Emulator *emulator)
     if (emulator->cpu.previous_pc == 0)
         return 0;
     return (emulator->memory[emulator->cpu.previous_pc] << 8) | emulator->memory[emulator->cpu.previous_pc + 1];
+}
+
+// Calls the undo function for the most recently executed instruction.
+int revert_last_instruction(Emulator *emulator)
+{
+    ExecutedInstruction *instruction = emulator->execution_record_ptr;
+    if (instruction == NULL) return 1;
+    undo_functions[instruction->type](emulator, instruction->data);
+    emulator->cpu.pc = instruction->address;
+    emulator->execution_record_ptr = instruction->previous;
+    free(instruction);
+}
+
+
+void undo_CLS(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_RET(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_JP_ADDR(Emulator *emulator, void *data)
+{
+    emulator->cpu.pc = *((int*)data);
+    free(data);
+}
+
+void undo_CALL_ADDR(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SE_VX_BYTE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SNE_VX_BYTE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SE_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_VX_BYTE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_ADD_VX_BYTE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_OR_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_AND_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_XOR_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_ADD_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SUB_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SHR_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SUBN_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SHL_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SNE_VX_VY(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_I_ADDR(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_JP_V0_ADDR(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_RND_VX_BYTE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_DRW_VX_VY_NIBBLE(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SKP_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_SKNP_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_VX_DT(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_VX_K(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_DT_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_ST_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_ADD_I_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_F_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_B_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_I_VX(Emulator *emulator, void *data)
+{
+
+}
+
+void undo_LD_VX_I(Emulator *emulator, void *data)
+{
+
 }

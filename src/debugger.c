@@ -186,6 +186,7 @@ void command_help(Debugger *debugger, DebuggerCommand *command)
     printf("stack full: Displays the entire stack.\n");
     printf("stack peek: Displays the top value of the stack.\n");
     printf("context <n>: Shows the n instructions surrounding the instruction being pointed to by the PC.\n");
+    printf("back: Reverts the last executed instruction.\n");
 }
 
 void command_context(Debugger *debugger, DebuggerCommand *command)
@@ -206,7 +207,18 @@ void command_context(Debugger *debugger, DebuggerCommand *command)
     }
 }
 
-void (*debugger_command_map[12]) (Debugger *debugger, DebuggerCommand *command) = {
+void command_back(Debugger *debugger, DebuggerCommand *command)
+{
+    if (!debugger->emulator->record_execution) {
+        printf("Time travel debugging is disabled!\n");
+        return;
+    }
+    
+    if (revert_last_instruction(debugger->emulator) == 1)
+        printf("No instructions to revert!\n");
+}
+
+void (*debugger_command_map[13]) (Debugger *debugger, DebuggerCommand *command) = {
     NULL,
     NULL,
     command_memory,
@@ -218,7 +230,8 @@ void (*debugger_command_map[12]) (Debugger *debugger, DebuggerCommand *command) 
     command_step,
     command_break,
     command_help,
-    command_context
+    command_context,
+    command_back
 };
 
 // Executes a debugger command against an Emulator instance.
@@ -263,6 +276,8 @@ int parse_debugger_command(char *input, DebuggerCommand *command)
         command->type = HELP;
     else if (strcmp(input, "context") == 0)
         command->type = CONTEXT;
+    else if (strcmp(input, "back") == 0)
+        command->type = BACK;
     else
         return 1;
     
