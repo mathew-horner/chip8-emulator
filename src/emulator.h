@@ -5,27 +5,6 @@
 #include "display.h"
 #include "memory.h"
 
-typedef struct emulator_t {
-    CPU cpu;
-    Display display;
-    uint8_t memory[MEMORY_SIZE];
-    
-    bool key_state[16];
-    bool waiting_for_key;
-    int key_register;
-
-    bool record_execution;
-    ExecutedInstruction *execution_record_ptr;
-} Emulator;
-
-void initialize_emulator(Emulator *emulator);
-void initialize_emulator_no_display(Emulator *emulator);
-void execute_instruction(Emulator *emulator, uint16_t instruction);
-void execute_next_instruction(Emulator *emulator);
-uint16_t next_instruction(Emulator *emulator);
-uint16_t previous_instruction(Emulator *emulator);
-int revert_last_instruction(Emulator *emulator);
-
 typedef enum instruction_type_t {
     CLS,
     RET,
@@ -63,6 +42,35 @@ typedef enum instruction_type_t {
     LD_VX_I
 } InstructionType;
 
+typedef struct executed_instruction_t ExecutedInstruction;
+typedef struct executed_instruction_t {
+    InstructionType type;
+    void *data;
+    ExecutedInstruction *previous;
+    uint16_t address;
+} ExecutedInstruction;
+
+typedef struct emulator_t {
+    CPU cpu;
+    Display display;
+    uint8_t memory[MEMORY_SIZE];
+    
+    bool key_state[16];
+    bool waiting_for_key;
+    int key_register;
+
+    bool record_execution;
+    ExecutedInstruction *execution_record_ptr;
+} Emulator;
+
+void initialize_emulator(Emulator *emulator);
+void initialize_emulator_no_display(Emulator *emulator);
+void execute_instruction(Emulator *emulator, uint16_t instruction);
+void execute_next_instruction(Emulator *emulator);
+uint16_t next_instruction(Emulator *emulator);
+uint16_t previous_instruction(Emulator *emulator);
+int revert_last_instruction(Emulator *emulator);
+
 void undo_CLS(Emulator *emulator, void *data);
 void undo_RET(Emulator *emulator, void *data);
 void undo_JP_ADDR(Emulator *emulator, void *data);
@@ -98,13 +106,6 @@ void undo_LD_B_VX(Emulator *emulator, void *data);
 void undo_LD_I_VX(Emulator *emulator, void *data);
 void undo_LD_VX_I(Emulator *emulator, void *data);
 
-typedef struct executed_instruction_t {
-    InstructionType type;
-    void *data;
-    ExecutedInstruction *previous;
-    uint16_t address;
-} ExecutedInstruction;
-
-void (*undo_functions[33]) (Emulator *emulator, void *data);
+void (*undo_functions[34]) (Emulator *emulator, void *data);
 
 #endif

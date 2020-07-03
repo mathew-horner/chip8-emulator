@@ -21,6 +21,43 @@ uint8_t hex_sprites[HEX_SPRITE_SIZE] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+void (*undo_functions[34]) (Emulator *emulator, void *data) = {
+    undo_CLS,
+    undo_RET,
+    undo_JP_ADDR,
+    undo_CALL_ADDR,
+    undo_SE_VX_BYTE,
+    undo_SNE_VX_BYTE,
+    undo_SE_VX_VY,
+    undo_LD_VX_BYTE,
+    undo_ADD_VX_BYTE,
+    undo_LD_VX_VY,
+    undo_OR_VX_VY,
+    undo_AND_VX_VY,
+    undo_XOR_VX_VY,
+    undo_ADD_VX_VY,
+    undo_SUB_VX_VY,
+    undo_SHR_VX_VY,
+    undo_SUBN_VX_VY,
+    undo_SHL_VX_VY,
+    undo_SNE_VX_VY,
+    undo_LD_I_ADDR,
+    undo_JP_V0_ADDR,
+    undo_RND_VX_BYTE,
+    undo_DRW_VX_VY_NIBBLE,
+    undo_SKP_VX,
+    undo_SKNP_VX,
+    undo_LD_VX_DT,
+    undo_LD_VX_K,
+    undo_LD_DT_VX,
+    undo_LD_ST_VX,
+    undo_ADD_I_VX,
+    undo_LD_F_VX,
+    undo_LD_B_VX,
+    undo_LD_I_VX,
+    undo_LD_VX_I
+};
+
 int get_pressed_key(Emulator *emulator)
 {
     int key_pressed = -1;
@@ -67,10 +104,8 @@ void add_execution_record(Emulator *emulator, InstructionType type, void *data)
     ExecutedInstruction *instruction = (ExecutedInstruction*)malloc(sizeof(ExecutedInstruction));
     instruction->type = type;
     instruction->data = data;
-
-    if (emulator->execution_record_ptr != NULL)
-        instruction->previous = emulator->execution_record_ptr;
-
+    instruction->address = emulator->cpu.pc;
+    instruction->previous = (emulator->execution_record_ptr != NULL) ? emulator->execution_record_ptr : NULL;
     emulator->execution_record_ptr = instruction;
 }
 
@@ -100,14 +135,13 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
 
         if (left == 1) {
             // JP addr
-            if (emulator->record_execution) {
-                int *pc = (int *)malloc(sizeof(int));
-                *pc = emulator->cpu.pc;
-                add_execution_record(emulator, JP_ADDR, (void*)pc);
-            }
+            if (emulator->record_execution)
+                add_execution_record(emulator, JP_ADDR, NULL);
             move_pc(&(emulator->cpu), instruction & 0xFFF);
         } else if (left == 2) {
             // CALL addr
+            if (emulator->record_execution)
+                add_execution_record(emulator, CALL_ADDR, NULL);
             emulator->cpu.sp++;
             emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc + 2;
             move_pc(&(emulator->cpu), instruction & 0xFFF);
@@ -338,15 +372,12 @@ void undo_RET(Emulator *emulator, void *data)
 
 }
 
-void undo_JP_ADDR(Emulator *emulator, void *data)
-{
-    emulator->cpu.pc = *((int*)data);
-    free(data);
-}
+void undo_JP_ADDR(Emulator *emulator, void *data) { }
 
 void undo_CALL_ADDR(Emulator *emulator, void *data)
 {
-
+    emulator->cpu.stack[emulator->cpu.sp] = 0;
+    emulator->cpu.sp--;
 }
 
 void undo_SE_VX_BYTE(Emulator *emulator, void *data)
