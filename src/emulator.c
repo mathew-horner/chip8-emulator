@@ -24,12 +24,12 @@ uint8_t hex_sprites[HEX_SPRITE_SIZE] = {
 //void (*instruction_functions) (Emulator *emulator, uint16_t instruction);
 void (*undo_functions[34]) (Emulator *emulator, void *data) = {
     undo_CLS,
-    undo_RET,
-    undo_JP_ADDR,
+    NULL,
+    NULL,
     undo_CALL_ADDR,
-    undo_SE_VX_BYTE,
-    undo_SNE_VX_BYTE,
-    undo_SE_VX_VY,
+    NULL, 
+    NULL,
+    NULL,
     undo_LD_VX_BYTE,
     undo_ADD_VX_BYTE,
     undo_LD_VX_VY,
@@ -239,8 +239,10 @@ int revert_last_instruction(Emulator *emulator)
     ExecutedInstruction *instruction = emulator->execution_record_ptr;
     if (instruction == NULL)
         return 1;
-    
-    undo_functions[instruction->type](emulator, instruction->data);
+   
+    if (undo_functions[instruction->type] != NULL)
+        undo_functions[instruction->type](emulator, instruction->data);
+
     emulator->cpu.pc = instruction->address;
     emulator->execution_record_ptr = instruction->previous;
 
@@ -625,21 +627,11 @@ void undo_CLS(Emulator *emulator, void *data)
 
 }
 
-void undo_RET(Emulator *emulator, void *data) { }
-
-void undo_JP_ADDR(Emulator *emulator, void *data) { }
-
 void undo_CALL_ADDR(Emulator *emulator, void *data)
 {
     emulator->cpu.stack[emulator->cpu.sp] = 0;
     emulator->cpu.sp--;
 }
-
-void undo_SE_VX_BYTE(Emulator *emulator, void *data) { }
-
-void undo_SNE_VX_BYTE(Emulator *emulator, void *data) { }
-
-void undo_SE_VX_VY(Emulator *emulator, void *data) { }
 
 void undo_LD_VX_BYTE(Emulator *emulator, void *data)
 {
