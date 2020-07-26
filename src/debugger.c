@@ -310,5 +310,6 @@ bool should_break(Debugger *debugger)
     for (int i = 0; i < debugger->break_address_count; i++)
         if (debugger->break_addresses[i] == debugger->emulator->cpu.pc)
             return true;
+
     return false;
 }

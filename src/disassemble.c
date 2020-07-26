@@ -3,7 +3,7 @@
 #include "disassemble.h"
 
 // Returns a CHIP-8 assembly representation of the provided machine code instruction.
-// NOTE: This function returns a heap-allocated string, be sure to free it after use.
+// NOTE: This function will return a heap-allocated string, be sure to free it after use.
 char *disassemble_instruction(uint16_t instruction)
 {
     if (instruction == 0x00E0)

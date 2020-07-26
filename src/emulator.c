@@ -21,6 +21,7 @@ uint8_t hex_sprites[HEX_SPRITE_SIZE] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+//void (*instruction_functions) (Emulator *emulator, uint16_t instruction);
 void (*undo_functions[34]) (Emulator *emulator, void *data) = {
     undo_CLS,
     undo_RET,
@@ -67,6 +68,7 @@ int get_pressed_key(Emulator *emulator)
             break;
         }
     }
+
     return key_pressed;
 }
 
@@ -82,11 +84,14 @@ void initialize_emulator_no_display(Emulator *emulator)
 {
     for (int i = 0; i < MEMORY_SIZE; i++)
         emulator->memory[i] = 0;
+
     initialize_cpu(&(emulator->cpu));
     emulator->waiting_for_key = false;
     emulator->key_register = -1;
+
     for (int i = 0; i < 16; i++)
         emulator->key_state[i] = false;
+
     load_hex_sprites(emulator);
     emulator->record_execution = false;
     emulator->execution_record_ptr = NULL;
@@ -120,213 +125,91 @@ void execute_instruction(Emulator *emulator, uint16_t instruction)
         emulator->key_register = -1;
     }
 
-    if (instruction == 0x00E0) {
-        // CLS
-        clear_pixels(&(emulator->display));
-        increment_pc(&(emulator->cpu));
-    } else if (instruction == 0x00EE) {
-        // RET
-        move_pc(&(emulator->cpu), emulator->cpu.stack[emulator->cpu.sp]);
-        emulator->cpu.sp--;
-    } else {
+    void (*fp) (Emulator *emulator, uint16_t instruction) = NULL;
+    
+    if (instruction == 0x00E0)
+        fp = do_CLS;
+    else if (instruction == 0x00EE)
+        fp = do_RET;
+    else {
         uint8_t left, right;
         left = instruction >> 12;
         right = instruction & 0xF;
 
-        if (left == 1) {
-            // JP addr
-            if (emulator->record_execution)
-                add_execution_record(emulator, JP_ADDR, NULL);
-            move_pc(&(emulator->cpu), instruction & 0xFFF);
-        } else if (left == 2) {
-            // CALL addr
-            if (emulator->record_execution)
-                add_execution_record(emulator, CALL_ADDR, NULL);
-            emulator->cpu.sp++;
-            emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc + 2;
-            move_pc(&(emulator->cpu), instruction & 0xFFF);
-        } else if (left == 3) {
-            // SE Vx, byte
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t byte = instruction & 0xFF;
-            if (emulator->cpu.registers[x] == byte) increment_pc(&(emulator->cpu));
-            increment_pc(&(emulator->cpu));
-        } else if (left == 4) {
-            // SNE Vx, byte
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t byte = instruction & 0xFF;
-            if (emulator->cpu.registers[x] != byte) increment_pc(&(emulator->cpu));
-            increment_pc(&(emulator->cpu));
-        } else if (left == 5) {
-            // SE Vx, Vy
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t y = (instruction >> 4) & 0xF;
-            if (emulator->cpu.registers[x] == emulator->cpu.registers[y]) increment_pc(&(emulator->cpu));
-            increment_pc(&(emulator->cpu));
-        } else if (left == 6) {
-            // LD Vx, byte
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t byte = instruction & 0xFF;
-            emulator->cpu.registers[x] = byte;
-            increment_pc(&(emulator->cpu));
-        } else if (left == 7) {
-            // ADD Vx, byte
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t byte = instruction & 0xFF;
-            emulator->cpu.registers[x] += byte;
-            increment_pc(&(emulator->cpu));
-        } else if (left == 8) {
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t y = (instruction >> 4) & 0xF;
-
-            if (right == 0) {
-                // LD Vx, Vy
-                emulator->cpu.registers[x] = emulator->cpu.registers[y];
-            } else if (right == 1) {
-                // OR Vx, Vy
-                emulator->cpu.registers[x] |= emulator->cpu.registers[y];
-            } else if (right == 2) {
-                // AND Vx, Vy
-                emulator->cpu.registers[x] &= emulator->cpu.registers[y];
-            } else if (right == 3) {
-                // XOR Vx, Vy
-                emulator->cpu.registers[x] ^= emulator->cpu.registers[y];
-            } else if (right == 4) {
-                // ADD Vx, Vy
-                emulator->cpu.registers[15] = 0;
-                int sum = emulator->cpu.registers[x] + emulator->cpu.registers[y];
-                if (sum > 255) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] = (uint8_t)sum;
-            } else if (right == 5) {
-                // SUB Vx, Vy
-                emulator->cpu.registers[15] = 0;
-                if (emulator->cpu.registers[x] > emulator->cpu.registers[y]) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] -= emulator->cpu.registers[y];
-            } else if (right == 6) {
-                // SHR Vx {, Vy}
-                emulator->cpu.registers[15] = 0;
-                if (emulator->cpu.registers[x] & 1) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] = emulator->cpu.registers[x] >> 1;
-            } else if (right == 7) {
-                // SUBN Vx, Vy
-                emulator->cpu.registers[15] = 0;
-                if (emulator->cpu.registers[x] < emulator->cpu.registers[y]) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] = emulator->cpu.registers[y] - emulator->cpu.registers[x];
-            } else if (right == 14) {
-                // SHL Vx {, Vy}
-                emulator->cpu.registers[15] = 0;
-                if ((emulator->cpu.registers[x] >> 7) & 1) emulator->cpu.registers[15] = 1;
-                emulator->cpu.registers[x] = emulator->cpu.registers[x] << 1;
-            }
-
-            increment_pc(&(emulator->cpu));
-        } else if (left == 9) {
-            // SNE Vx, Vy
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t y = (instruction >> 4) & 0xF;
-            if (emulator->cpu.registers[x] != emulator->cpu.registers[y]) increment_pc(&(emulator->cpu));
-            increment_pc(&(emulator->cpu));
-        } else if (left == 10) {
-            // LD I, addr
-            emulator->cpu.I = instruction & 0xFFF;
-            increment_pc(&(emulator->cpu));
-        } else if (left == 11) {
-            // JP V0, addr
-            move_pc(&(emulator->cpu), emulator->cpu.registers[0] + (instruction & 0xFFF));
-        } else if (left == 12) {
-            // RND Vx, byte
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t byte = instruction & 0xFF;
-            uint8_t random = rand() % 256;
-            emulator->cpu.registers[x] = random & byte;
-            increment_pc(&(emulator->cpu));
-        } else if (left == 13) {
-            // DRW Vx, Vy, nibble
-            emulator->cpu.registers[15] = 0;
-            uint8_t x = (instruction >> 8) & 0xF;
-            uint8_t y = (instruction >> 4) & 0xF;
-            uint8_t n = (instruction) & 0xF;
-            
-            int coord_x = emulator->cpu.registers[x];
-            int coord_y = emulator->cpu.registers[y];
-
-            for (int i = 0; i < n; i++) {
-                uint8_t data = emulator->memory[emulator->cpu.I + i];
-                for (int j = 0; j < 8; j++) {
-                    int row = (coord_y % DISPLAY_HEIGHT) + i;
-                    int col = (coord_x % DISPLAY_WIDTH) + (7 - j);
-                    int previous = emulator->display.pixels[row][col];
-                    int new = previous ^ data & 0x1;
-                    emulator->display.pixels[row][col] = new;
-                    if (previous == 1 && new == 0)
-                        emulator->cpu.registers[15] = 1;
-                    data >>= 1;
-                }
-            }
-
-            increment_pc(&(emulator->cpu));
-        } else if (left == 14) {
+        if (left == 1)
+            fp = do_JP_ADDR;
+        else if (left == 2)
+            fp = do_CALL_ADDR;
+        else if (left == 3)
+            fp = do_SE_VX_BYTE;
+        else if (left == 4)
+            fp = do_SNE_VX_BYTE;
+        else if (left == 5)
+            fp = do_SE_VX_VY;
+        else if (left == 6)
+            fp = do_LD_VX_BYTE;
+        else if (left == 7)
+            fp = do_ADD_VX_BYTE;
+        else if (left == 8) {
+            if (right == 0)
+                fp = do_LD_VX_VY;
+            else if (right == 1)
+                fp = do_OR_VX_VY;
+            else if (right == 2)
+                fp = do_AND_VX_VY;
+            else if (right == 3)
+                fp = do_XOR_VX_VY;
+            else if (right == 4)
+                fp = do_ADD_VX_VY;
+            else if (right == 5)
+                fp = do_SUB_VX_VY;
+            else if (right == 6)
+                fp = do_SHR_VX_VY;
+            else if (right == 7)
+                fp = do_SUBN_VX_VY;
+            else if (right == 14)
+                fp = do_SHL_VX_VY;
+        } else if (left == 9)
+            fp = do_SNE_VX_VY;
+        else if (left == 10)
+            fp = do_LD_I_ADDR;
+        else if (left == 11)
+            fp = do_JP_V0_ADDR;
+        else if (left == 12)
+            fp = do_RND_VX_BYTE;
+        else if (left == 13)
+            fp = do_DRW_VX_VY_NIBBLE;
+        else if (left == 14) {
             uint8_t right_two = instruction & 0xFF;
-            uint8_t x = (instruction >> 8) & 0xF;
-            if (right_two == 0x9E) {
-                // SKP Vx
-                if (emulator->key_state[emulator->cpu.registers[x]])
-                    increment_pc(&(emulator->cpu));
-            } else if (right_two == 0xA1) {
-                // SKNP Vx
-                if (!emulator->key_state[emulator->cpu.registers[x]])
-                    increment_pc(&(emulator->cpu));
-            }
-            increment_pc(&(emulator->cpu));
+            if (right_two == 0x9E)
+                fp = do_SKP_VX;
+            else if (right_two == 0xA1)
+                fp = do_SKNP_VX;
         } else if (left == 15) {
             uint8_t right_two = instruction & 0xFF;
-            uint8_t x = (instruction >> 8) & 0xF;
-            if (right_two == 0x07) {
-                // LD Vx, DT
-                emulator->cpu.registers[x] = emulator->cpu.dt;
-            } else if (right_two == 0x0A) {
-                // LD Vx, K
-                int key_pressed = get_pressed_key(emulator);
-                if (key_pressed != -1) {
-                    emulator->cpu.registers[x] = key_pressed;
-                } else {
-                    emulator->waiting_for_key = true;
-                    emulator->key_register = x;
-                }
-            } else if (right_two == 0x15) {
-                // LD DT, Vx
-                emulator->cpu.dt = emulator->cpu.registers[x];
-            } else if (right_two == 0x18) {
-                // LD ST, Vx
-                emulator->cpu.st = emulator->cpu.registers[x];
-            } else if (right_two == 0x1E) {
-                // ADD I, Vx
-                emulator->cpu.I += emulator->cpu.registers[x];
-            } else if (right_two == 0x29) {
-                // LD F, Vx
-                emulator->cpu.I = emulator->cpu.registers[x] * 5;
-            } else if (right_two == 0x33) {
-                // LD B, Vx
-                uint8_t x = (instruction >> 8) & 0xF;
-                uint8_t temp = emulator->cpu.registers[x];
-                for (int i = 2; i >= 0; i--) {
-                    emulator->memory[emulator->cpu.I + i] = temp % 10;
-                    temp /= 10;
-                }
-            } else if (right_two == 0x55) {
-                // LD [I], Vx
-                for (int i = 0; i <= x; i++)
-                    emulator->memory[emulator->cpu.I + i] = emulator->cpu.registers[i];
-            } else if (right_two == 0x65) {
-                // LD Vx, [I]
-                for (int i = 0; i <= x; i++)
-                    emulator->cpu.registers[i] = emulator->memory[emulator->cpu.I + i];
-            }
-            increment_pc(&(emulator->cpu));
-        } else {
-            increment_pc(&(emulator->cpu));
+            if (right_two == 0x07)
+                fp = do_LD_VX_DT;
+            else if (right_two == 0x0A)
+                fp = do_LD_VX_K;
+            else if (right_two == 0x15)
+                fp = do_LD_DT_VX;
+            else if (right_two == 0x18)
+                fp = do_LD_ST_VX;
+            else if (right_two == 0x1E)
+                fp = do_ADD_I_VX;
+            else if (right_two == 0x29)
+                fp = do_LD_F_VX;
+            else if (right_two == 0x33)
+                fp = do_LD_B_VX;
+            else if (right_two == 0x55)
+                fp = do_LD_I_VX;
+            else if (right_two == 0x65)
+                fp = do_LD_VX_I;
         }
     }
+
+    if (fp != NULL)
+        fp(emulator, instruction);
 }
 
 // Executes the instruction at the location of the PC.
@@ -354,23 +237,395 @@ uint16_t previous_instruction(Emulator *emulator)
 int revert_last_instruction(Emulator *emulator)
 {
     ExecutedInstruction *instruction = emulator->execution_record_ptr;
-    if (instruction == NULL) return 1;
+    if (instruction == NULL)
+        return 1;
+    
     undo_functions[instruction->type](emulator, instruction->data);
     emulator->cpu.pc = instruction->address;
     emulator->execution_record_ptr = instruction->previous;
+
+    if (instruction->previous != NULL) {
+        emulator->cpu.previous_pc = instruction->previous->address;
+    } else {
+        emulator->cpu.previous_pc = 0;
+    }
+
     free(instruction);
 }
 
+
+// ----------------------------
+//  INSTRUCTION "DO" FUNCTIONS
+// ----------------------------
+
+void do_CLS(Emulator *emulator, uint16_t instruction)
+{
+    clear_pixels(&(emulator->display));
+    increment_pc(&(emulator->cpu));
+}
+
+void do_RET(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, RET, NULL);
+
+    move_pc(&(emulator->cpu), emulator->cpu.stack[emulator->cpu.sp]);
+    emulator->cpu.sp--;
+}
+
+void do_JP_ADDR(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, JP_ADDR, NULL);
+    move_pc(&(emulator->cpu), instruction & 0xFFF);
+}
+
+void do_CALL_ADDR(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, CALL_ADDR, NULL);
+
+    emulator->cpu.sp++;
+    emulator->cpu.stack[emulator->cpu.sp] = emulator->cpu.pc + 2;
+    move_pc(&(emulator->cpu), instruction & 0xFFF);
+}
+
+void do_SE_VX_BYTE(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, SE_VX_BYTE, NULL);
+
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t byte = instruction & 0xFF;
+
+    if (emulator->cpu.registers[x] == byte)
+        increment_pc(&(emulator->cpu));
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SNE_VX_BYTE(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, SE_VX_BYTE, NULL);
+
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t byte = instruction & 0xFF;
+
+    if (emulator->cpu.registers[x] != byte)
+        increment_pc(&(emulator->cpu));
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SE_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, SE_VX_BYTE, NULL);
+
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    if (emulator->cpu.registers[x] == emulator->cpu.registers[y])
+        increment_pc(&(emulator->cpu));
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_VX_BYTE(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t byte = instruction & 0xFF;
+    emulator->cpu.registers[x] = byte;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_ADD_VX_BYTE(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t byte = instruction & 0xFF;
+    emulator->cpu.registers[x] += byte;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    emulator->cpu.registers[x] = emulator->cpu.registers[y];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_OR_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    emulator->cpu.registers[x] |= emulator->cpu.registers[y];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_AND_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    emulator->cpu.registers[x] &= emulator->cpu.registers[y];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_XOR_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    emulator->cpu.registers[x] ^= emulator->cpu.registers[y];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_ADD_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    emulator->cpu.registers[15] = 0;
+    int sum = emulator->cpu.registers[x] + emulator->cpu.registers[y];
+    emulator->cpu.registers[x] = (uint8_t)sum;
+
+    if (sum > 255)
+        emulator->cpu.registers[15] = 1;
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SUB_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    emulator->cpu.registers[15] = 0;
+    emulator->cpu.registers[x] -= emulator->cpu.registers[y];
+
+    if (emulator->cpu.registers[x] > emulator->cpu.registers[y])
+        emulator->cpu.registers[15] = 1;
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SHR_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    emulator->cpu.registers[15] = 0;
+    emulator->cpu.registers[x] = emulator->cpu.registers[x] >> 1;
+
+    if (emulator->cpu.registers[x] & 1)
+        emulator->cpu.registers[15] = 1;
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SUBN_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    emulator->cpu.registers[15] = 0;
+    emulator->cpu.registers[x] = emulator->cpu.registers[y] - emulator->cpu.registers[x];
+
+    if (emulator->cpu.registers[x] < emulator->cpu.registers[y])
+        emulator->cpu.registers[15] = 1;
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SHL_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+
+    emulator->cpu.registers[15] = 0;
+    emulator->cpu.registers[x] = emulator->cpu.registers[x] << 1;
+
+    if ((emulator->cpu.registers[x] >> 7) & 1)
+        emulator->cpu.registers[15] = 1;
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SNE_VX_VY(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    
+    if (emulator->cpu.registers[x] != emulator->cpu.registers[y])
+        increment_pc(&(emulator->cpu));
+    
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_I_ADDR(Emulator *emulator, uint16_t instruction)
+{
+    emulator->cpu.I = instruction & 0xFFF;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_JP_V0_ADDR(Emulator *emulator, uint16_t instruction)
+{
+    if (emulator->record_execution)
+        add_execution_record(emulator, JP_V0_ADDR, NULL);
+    move_pc(&(emulator->cpu), emulator->cpu.registers[0] + (instruction & 0xFFF));
+}
+
+void do_RND_VX_BYTE(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t byte = instruction & 0xFF;
+    uint8_t random = rand() % 256;
+    emulator->cpu.registers[x] = random & byte;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_DRW_VX_VY_NIBBLE(Emulator *emulator, uint16_t instruction)
+{
+    emulator->cpu.registers[15] = 0;
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t y = (instruction >> 4) & 0xF;
+    uint8_t n = (instruction) & 0xF;
+    
+    int coord_x = emulator->cpu.registers[x];
+    int coord_y = emulator->cpu.registers[y];
+
+    for (int i = 0; i < n; i++) {
+        uint8_t data = emulator->memory[emulator->cpu.I + i];
+
+        for (int j = 0; j < 8; j++) {
+            int row = (coord_y % DISPLAY_HEIGHT) + i;
+            int col = (coord_x % DISPLAY_WIDTH) + (7 - j);
+
+            int previous = emulator->display.pixels[row][col];
+            int new = previous ^ data & 0x1;
+
+            emulator->display.pixels[row][col] = new;
+
+            if (previous == 1 && new == 0)
+                emulator->cpu.registers[15] = 1;
+
+            data >>= 1;
+        }
+    }
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SKP_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    if (emulator->key_state[emulator->cpu.registers[x]])
+        increment_pc(&(emulator->cpu));
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_SKNP_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    if (!emulator->key_state[emulator->cpu.registers[x]])
+        increment_pc(&(emulator->cpu));
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_VX_DT(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    emulator->cpu.registers[x] = emulator->cpu.dt;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_VX_K(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    int key_pressed = get_pressed_key(emulator);
+
+    if (key_pressed != -1) {
+        emulator->cpu.registers[x] = key_pressed;
+    } else {
+        emulator->waiting_for_key = true;
+        emulator->key_register = x;
+    }
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_DT_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    emulator->cpu.dt = emulator->cpu.registers[x];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_ST_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    emulator->cpu.st = emulator->cpu.registers[x];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_ADD_I_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    emulator->cpu.I += emulator->cpu.registers[x];
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_F_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    emulator->cpu.I = emulator->cpu.registers[x] * 5;
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_B_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    uint8_t temp = emulator->cpu.registers[x];
+
+    for (int i = 2; i >= 0; i--) {
+        emulator->memory[emulator->cpu.I + i] = temp % 10;
+        temp /= 10;
+    }
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_I_VX(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    for (int i = 0; i <= x; i++)
+        emulator->memory[emulator->cpu.I + i] = emulator->cpu.registers[i];
+
+    increment_pc(&(emulator->cpu));
+}
+
+void do_LD_VX_I(Emulator *emulator, uint16_t instruction)
+{
+    uint8_t x = (instruction >> 8) & 0xF;
+    for (int i = 0; i <= x; i++)
+        emulator->cpu.registers[i] = emulator->memory[emulator->cpu.I + i];
+
+    increment_pc(&(emulator->cpu));
+}
+
+
+// ----------------------------
+//  INSTRUCTION UNDO FUNCTIONS
+// ----------------------------
 
 void undo_CLS(Emulator *emulator, void *data)
 {
 
 }
 
-void undo_RET(Emulator *emulator, void *data)
-{
-
-}
+void undo_RET(Emulator *emulator, void *data) { }
 
 void undo_JP_ADDR(Emulator *emulator, void *data) { }
 
@@ -380,20 +635,11 @@ void undo_CALL_ADDR(Emulator *emulator, void *data)
     emulator->cpu.sp--;
 }
 
-void undo_SE_VX_BYTE(Emulator *emulator, void *data)
-{
+void undo_SE_VX_BYTE(Emulator *emulator, void *data) { }
 
-}
+void undo_SNE_VX_BYTE(Emulator *emulator, void *data) { }
 
-void undo_SNE_VX_BYTE(Emulator *emulator, void *data)
-{
-
-}
-
-void undo_SE_VX_VY(Emulator *emulator, void *data)
-{
-
-}
+void undo_SE_VX_VY(Emulator *emulator, void *data) { }
 
 void undo_LD_VX_BYTE(Emulator *emulator, void *data)
 {

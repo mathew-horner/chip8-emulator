@@ -71,6 +71,43 @@ uint16_t next_instruction(Emulator *emulator);
 uint16_t previous_instruction(Emulator *emulator);
 int revert_last_instruction(Emulator *emulator);
 
+// TODO: These probably don't need to be forward declared here.
+
+void do_CLS(Emulator *emulator, uint16_t instruction);
+void do_RET(Emulator *emulator, uint16_t instruction);
+void do_JP_ADDR(Emulator *emulator, uint16_t instruction);
+void do_CALL_ADDR(Emulator *emulator, uint16_t instruction);
+void do_SE_VX_BYTE(Emulator *emulator, uint16_t instruction);
+void do_SNE_VX_BYTE(Emulator *emulator, uint16_t instruction);
+void do_SE_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_LD_VX_BYTE(Emulator *emulator, uint16_t instruction);
+void do_ADD_VX_BYTE(Emulator *emulator, uint16_t instruction);
+void do_LD_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_OR_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_AND_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_XOR_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_ADD_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_SUB_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_SHR_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_SUBN_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_SHL_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_SNE_VX_VY(Emulator *emulator, uint16_t instruction);
+void do_LD_I_ADDR(Emulator *emulator, uint16_t instruction);
+void do_JP_V0_ADDR(Emulator *emulator, uint16_t instruction);
+void do_RND_VX_BYTE(Emulator *emulator, uint16_t instruction);
+void do_DRW_VX_VY_NIBBLE(Emulator *emulator, uint16_t instruction);
+void do_SKP_VX(Emulator *emulator, uint16_t instruction);
+void do_SKNP_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_VX_DT(Emulator *emulator, uint16_t instruction);
+void do_LD_VX_K(Emulator *emulator, uint16_t instruction);
+void do_LD_DT_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_ST_VX(Emulator *emulator, uint16_t instruction);
+void do_ADD_I_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_F_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_B_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_I_VX(Emulator *emulator, uint16_t instruction);
+void do_LD_VX_I(Emulator *emulator, uint16_t instruction);
+
 void undo_CLS(Emulator *emulator, void *data);
 void undo_RET(Emulator *emulator, void *data);
 void undo_JP_ADDR(Emulator *emulator, void *data);
